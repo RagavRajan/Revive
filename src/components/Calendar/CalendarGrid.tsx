@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import type { AppSettings } from '../../types'
 import { useCalendar } from '../../hooks/useCalendar'
-import { getDaysInMonth, getFirstDayOfWeek, toDateKey, getRemainingWorkingDays } from '../../utils/date'
+import { getDaysInMonth, getFirstDayOfWeek, toDateKey, getRemainingWorkingDays, getTotalWorkingDays } from '../../utils/date'
 import { HOLIDAYS_2026 } from '../../utils/constants'
 import { MonthNavigator } from './MonthNavigator'
 import { CalendarDay } from './CalendarDay'
@@ -16,7 +16,9 @@ const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 export function CalendarGrid({ settings }: Props) {
   const { year, month, prevMonth, nextMonth, getDayStatus, refresh } = useCalendar(settings)
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
+  const currentYear = new Date().getFullYear()
   const remainingDays = useMemo(() => getRemainingWorkingDays(HOLIDAYS_2026), [])
+  const totalDays = useMemo(() => getTotalWorkingDays(currentYear, HOLIDAYS_2026), [currentYear])
 
   const daysInMonth = getDaysInMonth(year, month)
   const firstDay = getFirstDayOfWeek(year, month)
@@ -65,15 +67,15 @@ export function CalendarGrid({ settings }: Props) {
         onNext={nextMonth}
       />
 
-      <div className="calendar-remaining">
-        <span>{remainingDays}</span> working days remaining in {new Date().getFullYear()}
-      </div>
-
       <div className="calendar-grid">
         {DAY_LABELS.map(label => (
           <div key={label} className="calendar-header">{label}</div>
         ))}
         {cells}
+      </div>
+
+      <div className="calendar-remaining">
+        <span>{remainingDays}/{totalDays}</span> working days remaining in {currentYear}
       </div>
 
       {selectedDay && (
@@ -95,7 +97,7 @@ export function CalendarGrid({ settings }: Props) {
           text-align: center;
           color: var(--color-text-muted);
           font-size: 0.85rem;
-          margin-bottom: 16px;
+          margin-top: 16px;
         }
         .calendar-remaining span {
           color: var(--color-primary);

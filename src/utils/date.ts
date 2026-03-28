@@ -84,3 +84,21 @@ export function getRemainingWorkingDays(holidays: Record<string, string>): numbe
 
   return count
 }
+
+export function getTotalWorkingDays(year: number, holidays: Record<string, string>): number {
+  const start = new Date(year, 0, 1)
+  const end = new Date(year, 11, 31)
+  let count = 0
+
+  const d = new Date(start)
+  while (d <= end) {
+    const key = toDateKey(d)
+    const day = d.getDay()
+    if (day !== 0 && day !== 6 && !holidays[key]) {
+      count++
+    }
+    d.setDate(d.getDate() + 1)
+  }
+
+  return count
+}

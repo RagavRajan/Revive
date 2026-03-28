@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { collection, doc, getDoc, getDocs, query, where, orderBy } from 'firebase/firestore'
 import { db } from '../../firebase/config'
 import type { DayRecord, DayStatus, AppSettings } from '../../types'
-import { getMonthRange, getDaysInMonth, getFirstDayOfWeek, toDateKey, isFutureDate, minutesSinceMidnight, isWeekend, getRemainingWorkingDays } from '../../utils/date'
+import { getMonthRange, getDaysInMonth, getFirstDayOfWeek, toDateKey, isFutureDate, minutesSinceMidnight, isWeekend, getRemainingWorkingDays, getTotalWorkingDays } from '../../utils/date'
 import { HOLIDAYS_2026 } from '../../utils/constants'
 import { MonthNavigator } from './MonthNavigator'
 import { CalendarDay } from './CalendarDay'
@@ -21,6 +21,10 @@ export function SharedCalendarView({ uid }: Props) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
+
+  const currentYear = now.getFullYear()
+  const remainingDays = useMemo(() => getRemainingWorkingDays(HOLIDAYS_2026), [])
+  const totalDays = useMemo(() => getTotalWorkingDays(currentYear, HOLIDAYS_2026), [currentYear])
 
   // Load settings once
   useEffect(() => {
@@ -111,9 +115,6 @@ export function SharedCalendarView({ uid }: Props) {
 
       <div className="calendar">
         <MonthNavigator year={year} month={month} onPrev={prevMonth} onNext={nextMonth} />
-        <div className="calendar-remaining">
-          <span>{getRemainingWorkingDays(HOLIDAYS_2026)}</span> working days remaining in {new Date().getFullYear()}
-        </div>
         {loading ? (
           <p style={{ textAlign: 'center', color: 'var(--color-text-muted)' }}>Loading...</p>
         ) : (
@@ -122,6 +123,9 @@ export function SharedCalendarView({ uid }: Props) {
             {cells}
           </div>
         )}
+        <div className="calendar-remaining">
+          <span>{remainingDays}/{totalDays}</span> working days remaining in {currentYear}
+        </div>
       </div>
 
       {selectedDay && (
@@ -176,7 +180,7 @@ export function SharedCalendarView({ uid }: Props) {
           text-align: center;
           color: var(--color-text-muted);
           font-size: 0.85rem;
-          margin-bottom: 16px;
+          margin-top: 16px;
         }
         .calendar-remaining span {
           color: var(--color-primary);
