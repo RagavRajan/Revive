@@ -150,7 +150,7 @@ export function DayDetail({ dateKey, onClose, onUpdate, readOnly, uid }: Props) 
           padding: 24px;
           max-height: 80vh;
           overflow-y: auto;
-          max-width: 400px;
+          max-width: 550px;
           width: 100%;
           box-shadow: var(--shadow);
         }
