@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { collection, doc, getDoc, getDocs, query, where, orderBy } from 'firebase/firestore'
 import { db } from '../../firebase/config'
 import type { DayRecord, DayStatus, AppSettings } from '../../types'
-import { getMonthRange, getDaysInMonth, getFirstDayOfWeek, toDateKey, isFutureDate, minutesSinceMidnight, isWeekend } from '../../utils/date'
+import { getMonthRange, getDaysInMonth, getFirstDayOfWeek, toDateKey, isFutureDate, minutesSinceMidnight, isWeekend, getRemainingWorkingDays } from '../../utils/date'
 import { HOLIDAYS_2026 } from '../../utils/constants'
 import { MonthNavigator } from './MonthNavigator'
 import { CalendarDay } from './CalendarDay'
@@ -111,6 +111,9 @@ export function SharedCalendarView({ uid }: Props) {
 
       <div className="calendar">
         <MonthNavigator year={year} month={month} onPrev={prevMonth} onNext={nextMonth} />
+        <div className="calendar-remaining">
+          <span>{getRemainingWorkingDays(HOLIDAYS_2026)}</span> working days remaining in {new Date().getFullYear()}
+        </div>
         {loading ? (
           <p style={{ textAlign: 'center', color: 'var(--color-text-muted)' }}>Loading...</p>
         ) : (
@@ -168,6 +171,17 @@ export function SharedCalendarView({ uid }: Props) {
           width: 100%;
           margin: 0 auto;
           flex: 1;
+        }
+        .calendar-remaining {
+          text-align: center;
+          color: var(--color-text-muted);
+          font-size: 0.85rem;
+          margin-bottom: 16px;
+        }
+        .calendar-remaining span {
+          color: var(--color-primary);
+          font-weight: 700;
+          font-size: 1.1rem;
         }
         .calendar-grid {
           display: grid;
