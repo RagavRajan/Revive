@@ -2,8 +2,9 @@ let successAudio: HTMLAudioElement | null = null
 let failureAudio: HTMLAudioElement | null = null
 
 export function preloadSounds() {
-  successAudio = new Audio('/sounds/success.wav')
-  failureAudio = new Audio('/sounds/failure.wav')
+  const base = import.meta.env.BASE_URL
+  successAudio = new Audio(`${base}sounds/success.wav`)
+  failureAudio = new Audio(`${base}sounds/failure.wav`)
 }
 
 export function playSuccess() {
