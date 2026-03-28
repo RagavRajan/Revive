@@ -12,7 +12,6 @@ export function useScanner({ onScan, elementId }: UseScannerOptions) {
   const [isRunning, setIsRunning] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Keep the ref in sync so the scanner always calls the latest callback
   useEffect(() => {
     onScanRef.current = onScan
   }, [onScan])
@@ -24,23 +23,43 @@ export function useScanner({ onScan, elementId }: UseScannerOptions) {
       const scanner = new Html5Qrcode(elementId)
       scannerRef.current = scanner
 
-      const cameras = await Html5Qrcode.getCameras()
-      if (cameras.length === 0) {
-        setError('No camera found')
-        return
+      // Use back camera on mobile (better autofocus), front on desktop
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+      const cameraConfig: MediaTrackConstraints = {
+        facingMode: isMobile ? 'environment' : 'user',
+        // @ts-expect-error -- advanced constraints not in TS types but supported by browsers
+        advanced: [{ focusMode: 'continuous' }],
       }
 
       await scanner.start(
-        cameras[0].id,
+        cameraConfig,
         {
           fps: 10,
-          qrbox: { width: 300, height: 150 },
+          qrbox: { width: 280, height: 140 },
+          aspectRatio: isMobile ? 1.0 : undefined,
         },
         (decodedText) => {
           onScanRef.current(decodedText)
         },
         () => {}
       )
+
+      // Try to enable continuous autofocus on the active video track
+      try {
+        const videoElement = document.querySelector(`#${elementId} video`) as HTMLVideoElement | null
+        if (videoElement?.srcObject) {
+          const track = (videoElement.srcObject as MediaStream).getVideoTracks()[0]
+          const capabilities = track.getCapabilities?.()
+          if (capabilities && 'focusMode' in capabilities) {
+            await track.applyConstraints({
+              // @ts-expect-error -- focusMode not in TS types
+              advanced: [{ focusMode: 'continuous' }],
+            })
+          }
+        }
+      } catch {
+        // autofocus constraint not supported — that's ok
+      }
 
       setIsRunning(true)
       setError(null)
