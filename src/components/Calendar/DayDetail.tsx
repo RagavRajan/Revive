@@ -125,11 +125,14 @@ export function DayDetail({ dateKey, onClose, onUpdate, readOnly, uid }: Props) 
           justify-content: center;
           z-index: 50;
           padding: 24px;
+          overflow-y: auto;
         }
         .day-detail {
           background: var(--color-surface);
           border-radius: var(--radius-lg);
           padding: 24px;
+          max-height: 80vh;
+          overflow-y: auto;
           max-width: 400px;
           width: 100%;
           box-shadow: var(--shadow);
