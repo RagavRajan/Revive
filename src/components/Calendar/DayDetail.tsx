@@ -98,8 +98,9 @@ export function DayDetail({ dateKey, onClose, onUpdate, readOnly, uid }: Props) 
               return sessions.map((s, i) => (
                 <div key={s.checkIn.id} className="session-row">
                   <span className="session-col-num">{i + 1}</span>
-                  <span className="session-col">{formatTime(s.checkIn.timestamp)}</span>
+                  <span className="session-col"><span className="session-dot dot-in" /> {formatTime(s.checkIn.timestamp)}</span>
                   <span className="session-col">
+                    <span className="session-dot dot-out" />{' '}
                     {s.checkOut
                       ? <>{formatTime(s.checkOut.timestamp)}{s.checkOut.autoClose && ' (auto)'}</>
                       : <span className="session-active">Active</span>
