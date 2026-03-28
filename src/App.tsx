@@ -13,7 +13,7 @@ import { ScannerView } from './components/Scanner/ScannerView'
 import { BarcodeRegistration } from './components/Scanner/BarcodeRegistration'
 import { SettingsPage } from './components/Settings/SettingsPage'
 
-function AuthenticatedApp() {
+function AuthenticatedApp({ user }: { user: User }) {
   const [activeView, setActiveView] = useState<ActiveView>('calendar')
   const { settings, loading: settingsLoading, updateSettings } = useSettings()
   const { checkedIn, recordScan, refresh: refreshAttendance } = useAttendance()
@@ -44,7 +44,7 @@ function AuthenticatedApp() {
   }
 
   return (
-    <Layout activeView={activeView} onNavigate={setActiveView}>
+    <Layout activeView={activeView} onNavigate={setActiveView} onSignOut={signOut} userEmail={user.email}>
       {activeView === 'calendar' && (
         <CalendarGrid settings={settings} />
       )}
@@ -59,7 +59,6 @@ function AuthenticatedApp() {
         <SettingsPage
           settings={settings}
           onUpdate={updateSettings}
-          onSignOut={signOut}
         />
       )}
     </Layout>
@@ -90,7 +89,7 @@ function App() {
     return <LoginScreen />
   }
 
-  return <AuthenticatedApp />
+  return <AuthenticatedApp user={user} />
 }
 
 export default App

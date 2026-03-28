@@ -3,14 +3,20 @@ import type { ActiveView } from '../types'
 interface Props {
   activeView: ActiveView
   onNavigate: (view: ActiveView) => void
+  onSignOut: () => Promise<void>
+  userEmail?: string | null
   children: React.ReactNode
 }
 
-export function Layout({ activeView, onNavigate, children }: Props) {
+export function Layout({ activeView, onNavigate, onSignOut, userEmail, children }: Props) {
   return (
     <div className="layout">
       <header className="layout-header">
         <h1 className="layout-title">Revive</h1>
+        <div className="layout-user">
+          {userEmail && <span className="layout-email">{userEmail}</span>}
+          <button className="layout-signout" onClick={onSignOut}>Sign Out</button>
+        </div>
       </header>
 
       <main className="layout-main">
@@ -48,14 +54,37 @@ export function Layout({ activeView, onNavigate, children }: Props) {
           height: 100%;
         }
         .layout-header {
-          padding: 16px 24px;
+          padding: 12px 24px;
           border-bottom: 1px solid var(--color-border);
           flex-shrink: 0;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
         }
         .layout-title {
           font-size: 1.2rem;
           font-weight: 700;
           color: var(--color-primary);
+        }
+        .layout-user {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .layout-email {
+          color: var(--color-text-muted);
+          font-size: 0.8rem;
+        }
+        .layout-signout {
+          font-size: 0.8rem;
+          color: var(--color-danger);
+          padding: 6px 12px;
+          border: 1px solid var(--color-danger);
+          border-radius: var(--radius);
+          transition: background var(--transition);
+        }
+        .layout-signout:hover {
+          background: var(--color-danger-bg);
         }
         .layout-main {
           flex: 1;
