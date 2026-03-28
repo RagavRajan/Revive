@@ -3,7 +3,8 @@ import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../firebase/config'
 import type { DayRecord } from '../../types'
 import { getDayRecord, toggleDayOff } from '../../db/attendance'
-import { formatTime, fromDateKey } from '../../utils/date'
+import { formatTime, fromDateKey, isWeekend } from '../../utils/date'
+import { HOLIDAYS_2026 } from '../../utils/constants'
 
 interface Props {
   dateKey: string
@@ -51,6 +52,14 @@ export function DayDetail({ dateKey, onClose, onUpdate, readOnly, uid }: Props) 
           <h3>{formatted}</h3>
           <button className="day-detail-close" onClick={onClose}>&times;</button>
         </div>
+
+        {HOLIDAYS_2026[dateKey] && (
+          <div className="day-detail-badge holiday-badge">{HOLIDAYS_2026[dateKey]}</div>
+        )}
+
+        {isWeekend(dateKey) && !HOLIDAYS_2026[dateKey] && (
+          <div className="day-detail-badge weekend-badge">Weekend</div>
+        )}
 
         {record?.isDayOff && (
           <div className="day-detail-badge day-off-badge">Day Off</div>
@@ -133,6 +142,14 @@ export function DayDetail({ dateKey, onClose, onUpdate, readOnly, uid }: Props) 
           font-size: 0.8rem;
           font-weight: 500;
           margin-bottom: 12px;
+        }
+        .holiday-badge {
+          background: rgba(108, 99, 255, 0.2);
+          color: var(--color-primary);
+        }
+        .weekend-badge {
+          background: rgba(85, 85, 112, 0.2);
+          color: var(--color-day-off);
         }
         .day-off-badge {
           background: var(--color-day-off);

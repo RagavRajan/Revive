@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { DayRecord, DayStatus, AppSettings } from '../types'
 import { getMonthRecords } from '../db/attendance'
-import { getMonthRange, isFutureDate, minutesSinceMidnight } from '../utils/date'
+import { getMonthRange, isFutureDate, minutesSinceMidnight, isWeekend } from '../utils/date'
+import { HOLIDAYS_2026 } from '../utils/constants'
 
 export function useCalendar(settings: AppSettings | null) {
   const now = new Date()
@@ -45,14 +46,24 @@ export function useCalendar(settings: AppSettings | null) {
   }, [month])
 
   const getDayStatus = useCallback((dateKey: string): DayStatus => {
-    if (isFutureDate(dateKey)) return 'future'
-
     const record = records.get(dateKey)
-    if (!record) return 'no-record'
-    if (record.isDayOff) return 'day-off'
 
-    const checkIns = record.events.filter(e => e.type === 'check-in')
-    if (checkIns.length === 0) return 'no-record'
+    // Manual day-off overrides everything
+    if (record?.isDayOff) return 'day-off'
+
+    // Check if there are actual check-ins
+    const checkIns = record?.events.filter(e => e.type === 'check-in') ?? []
+
+    // If no check-ins, check for holiday/weekend
+    if (checkIns.length === 0) {
+      if (HOLIDAYS_2026[dateKey]) return 'holiday'
+      if (isWeekend(dateKey)) return 'weekend'
+      if (isFutureDate(dateKey)) return 'future'
+      return 'no-record'
+    }
+
+    // Has check-ins — evaluate against deadline
+    if (isFutureDate(dateKey)) return 'future'
 
     const firstCheckIn = checkIns.reduce((earliest, e) =>
       e.timestamp < earliest.timestamp ? e : earliest

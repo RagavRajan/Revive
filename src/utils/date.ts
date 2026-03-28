@@ -58,3 +58,8 @@ export function isFutureDate(dateKey: string): boolean {
 export function isToday(dateKey: string): boolean {
   return dateKey === todayKey()
 }
+
+export function isWeekend(dateKey: string): boolean {
+  const day = fromDateKey(dateKey).getDay()
+  return day === 0 || day === 6
+}

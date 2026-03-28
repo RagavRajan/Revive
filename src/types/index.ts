@@ -16,6 +16,6 @@ export interface AppSettings {
   deadlineMinutes: number // minutes since midnight (540 = 9:00 AM)
 }
 
-export type DayStatus = 'on-time' | 'missed' | 'day-off' | 'future' | 'no-record'
+export type DayStatus = 'on-time' | 'missed' | 'day-off' | 'holiday' | 'weekend' | 'future' | 'no-record'
 
 export type ActiveView = 'calendar' | 'scanner' | 'settings'

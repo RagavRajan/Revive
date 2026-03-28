@@ -1,5 +1,6 @@
 import type { DayStatus } from '../../types'
 import { isToday } from '../../utils/date'
+import { HOLIDAYS_2026 } from '../../utils/constants'
 
 interface Props {
   dateKey: string
@@ -10,14 +11,17 @@ interface Props {
 
 export function CalendarDay({ dateKey, dayNumber, status, onClick }: Props) {
   const today = isToday(dateKey)
-
-  const isPast = status !== 'future'
+  const isPast = status !== 'future' && status !== 'holiday' && status !== 'weekend'
   const noShow = isPast && status === 'no-record'
+  const isOff = status === 'day-off' || status === 'holiday' || status === 'weekend'
+  const holidayName = HOLIDAYS_2026[dateKey]
 
   const statusClass =
     status === 'on-time' ? 'day-on-time' :
     status === 'missed' ? 'day-late' :
     noShow ? 'day-absent' :
+    status === 'holiday' ? 'day-holiday' :
+    status === 'weekend' ? 'day-weekend' :
     status === 'day-off' ? 'day-off' :
     status === 'future' ? 'day-future' :
     'day-empty'
@@ -26,11 +30,12 @@ export function CalendarDay({ dateKey, dayNumber, status, onClick }: Props) {
     <button
       className={`calendar-day ${statusClass} ${today ? 'day-today' : ''}`}
       onClick={() => onClick(dateKey)}
+      title={holidayName || undefined}
     >
       <span className="day-number">{dayNumber}</span>
       {(status === 'on-time' || status === 'missed') && <span className="day-icon">&#10003;</span>}
       {noShow && <span className="day-icon">&#10007;</span>}
-      {status === 'day-off' && <span className="day-icon">&mdash;</span>}
+      {isOff && <span className="day-icon">&mdash;</span>}
 
       <style>{`
         .calendar-day {
@@ -70,6 +75,14 @@ export function CalendarDay({ dateKey, dayNumber, status, onClick }: Props) {
         .day-absent {
           background: var(--color-danger-bg);
           color: var(--color-danger);
+        }
+        .day-holiday {
+          background: rgba(108, 99, 255, 0.15);
+          color: var(--color-primary);
+        }
+        .day-weekend {
+          background: rgba(85, 85, 112, 0.1);
+          color: var(--color-day-off);
         }
         .day-off {
           color: var(--color-day-off);

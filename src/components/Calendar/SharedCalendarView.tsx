@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { collection, doc, getDoc, getDocs, query, where, orderBy } from 'firebase/firestore'
 import { db } from '../../firebase/config'
 import type { DayRecord, DayStatus, AppSettings } from '../../types'
-import { getMonthRange, getDaysInMonth, getFirstDayOfWeek, toDateKey, isFutureDate, minutesSinceMidnight } from '../../utils/date'
+import { getMonthRange, getDaysInMonth, getFirstDayOfWeek, toDateKey, isFutureDate, minutesSinceMidnight, isWeekend } from '../../utils/date'
+import { HOLIDAYS_2026 } from '../../utils/constants'
 import { MonthNavigator } from './MonthNavigator'
 import { CalendarDay } from './CalendarDay'
 import { DayDetail } from './DayDetail'
@@ -65,12 +66,16 @@ export function SharedCalendarView({ uid }: Props) {
   }
 
   const getDayStatus = (dateKey: string): DayStatus => {
-    if (isFutureDate(dateKey)) return 'future'
     const record = records.get(dateKey)
-    if (!record) return 'no-record'
-    if (record.isDayOff) return 'day-off'
-    const checkIns = record.events.filter(e => e.type === 'check-in')
-    if (checkIns.length === 0) return 'no-record'
+    if (record?.isDayOff) return 'day-off'
+    const checkIns = record?.events.filter(e => e.type === 'check-in') ?? []
+    if (checkIns.length === 0) {
+      if (HOLIDAYS_2026[dateKey]) return 'holiday'
+      if (isWeekend(dateKey)) return 'weekend'
+      if (isFutureDate(dateKey)) return 'future'
+      return 'no-record'
+    }
+    if (isFutureDate(dateKey)) return 'future'
     const firstCheckIn = checkIns.reduce((a, b) => a.timestamp < b.timestamp ? a : b)
     const deadline = settings?.deadlineMinutes ?? 540
     return minutesSinceMidnight(new Date(firstCheckIn.timestamp)) <= deadline ? 'on-time' : 'missed'
