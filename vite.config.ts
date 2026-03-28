@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  base: '/Revive/',
   plugins: [
     react(),
     VitePWA({
@@ -19,8 +20,8 @@ export default defineConfig({
         theme_color: '#1a1a2e',
         background_color: '#1a1a2e',
         display: 'standalone',
-        scope: '/',
-        start_url: '/',
+        scope: '/Revive/',
+        start_url: '/Revive/',
         icons: [
           {
             src: 'pwa-192x192.png',
