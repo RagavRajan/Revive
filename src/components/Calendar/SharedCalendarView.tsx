@@ -158,22 +158,23 @@ export function SharedCalendarView({ uid }: Props) {
           padding: 24px;
         }
         .calendar {
-          padding: 24px;
-          max-width: 500px;
+          padding: 24px 32px;
+          max-width: 700px;
+          width: 100%;
           margin: 0 auto;
           flex: 1;
         }
         .calendar-grid {
           display: grid;
           grid-template-columns: repeat(7, 1fr);
-          gap: 4px;
+          gap: 6px;
         }
         .calendar-header {
           text-align: center;
-          font-size: 0.75rem;
+          font-size: 0.85rem;
           font-weight: 600;
           color: var(--color-text-muted);
-          padding: 8px 0;
+          padding: 10px 0;
           text-transform: uppercase;
           letter-spacing: 0.5px;
         }
