@@ -45,6 +45,20 @@ export function DayDetail({ dateKey, onClose, onUpdate, readOnly, uid }: Props) 
     ? [...record.events].sort((a, b) => a.timestamp - b.timestamp)
     : []
 
+  // Calculate total hours from check-in/check-out pairs
+  let totalMs = 0
+  for (let i = 0; i < sortedEvents.length; i++) {
+    if (sortedEvents[i].type === 'check-in') {
+      const checkOut = sortedEvents.find((e, j) => j > i && e.type === 'check-out')
+      if (checkOut) {
+        totalMs += checkOut.timestamp - sortedEvents[i].timestamp
+      }
+    }
+  }
+  const totalHours = totalMs / (1000 * 60 * 60)
+  const hours = Math.floor(totalHours)
+  const mins = Math.round((totalHours - hours) * 60)
+
   return (
     <div className="day-detail-overlay" onClick={onClose}>
       <div className="day-detail" onClick={e => e.stopPropagation()}>
@@ -82,6 +96,12 @@ export function DayDetail({ dateKey, onClose, onUpdate, readOnly, uid }: Props) 
           </div>
         ) : (
           <p className="day-detail-empty">No events recorded</p>
+        )}
+
+        {totalMs > 0 && (
+          <div className="day-detail-hours">
+            {hours}h {mins}m logged
+          </div>
         )}
 
         {!readOnly && (
@@ -189,6 +209,16 @@ export function DayDetail({ dateKey, onClose, onUpdate, readOnly, uid }: Props) 
         .timeline-time {
           color: var(--color-text-muted);
           font-size: 0.9rem;
+        }
+        .day-detail-hours {
+          text-align: center;
+          margin-top: 16px;
+          padding: 10px;
+          background: var(--color-success-bg);
+          border-radius: var(--radius);
+          color: var(--color-success);
+          font-weight: 600;
+          font-size: 1.1rem;
         }
         .day-detail-empty {
           color: var(--color-text-muted);
