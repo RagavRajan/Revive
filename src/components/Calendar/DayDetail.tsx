@@ -94,11 +94,13 @@ export function DayDetail({ dateKey, onClose, onUpdate, readOnly, uid }: Props) 
                 <div key={s.checkIn.id} className="session-row">
                   <span className="session-num">#{i + 1}</span>
                   <div className="session-in">
+                    <span className="session-type-label">Check-In</span>
                     <span className="session-dot dot-in" />
                     {formatTime(s.checkIn.timestamp)}
                   </div>
                   <span className="session-arrow">&rarr;</span>
                   <div className="session-out">
+                    <span className="session-type-label">Check-Out</span>
                     <span className="session-dot dot-out" />
                     {s.checkOut
                       ? <>{formatTime(s.checkOut.timestamp)}{s.checkOut.autoClose && ' (auto)'}</>
@@ -201,7 +203,8 @@ export function DayDetail({ dateKey, onClose, onUpdate, readOnly, uid }: Props) 
         .session-row {
           display: flex;
           align-items: center;
-          gap: 10px;
+          justify-content: space-between;
+          gap: 12px;
           background: var(--color-bg);
           padding: 10px 12px;
           border-radius: var(--radius);
@@ -219,8 +222,15 @@ export function DayDetail({ dateKey, onClose, onUpdate, readOnly, uid }: Props) 
           gap: 6px;
           font-weight: 500;
         }
+        .session-type-label {
+          font-size: 0.7rem;
+          color: var(--color-text-muted);
+          text-transform: uppercase;
+          letter-spacing: 0.3px;
+        }
         .session-arrow {
           color: var(--color-text-muted);
+          flex-shrink: 0;
         }
         .session-dot {
           width: 8px;
