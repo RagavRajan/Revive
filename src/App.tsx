@@ -61,7 +61,7 @@ function AuthenticatedApp({ user }: { user: User }) {
   }
 
   return (
-    <Layout activeView={activeView} onNavigate={setActiveView} onSignOut={signOut} userEmail={user.email} onShare={handleShare}>
+    <Layout activeView={activeView} onNavigate={setActiveView} onSignOut={signOut} userEmail={user.email} onShare={handleShare} checkedIn={checkedIn}>
       {activeView === 'calendar' && (
         <CalendarGrid settings={settings} />
       )}
@@ -72,7 +72,7 @@ function AuthenticatedApp({ user }: { user: User }) {
           onScan={recordScan}
         />
       )}
-      {activeView === 'settings' && (
+      {activeView === 'settings' && checkedIn && (
         <SettingsPage
           settings={settings}
           onUpdate={updateSettings}

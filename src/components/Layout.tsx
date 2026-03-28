@@ -6,10 +6,11 @@ interface Props {
   onSignOut: () => Promise<void>
   onShare: () => void
   userEmail?: string | null
+  checkedIn: boolean
   children: React.ReactNode
 }
 
-export function Layout({ activeView, onNavigate, onSignOut, onShare, userEmail, children }: Props) {
+export function Layout({ activeView, onNavigate, onSignOut, onShare, userEmail, checkedIn, children }: Props) {
   return (
     <div className="layout">
       <header className="layout-header">
@@ -43,8 +44,8 @@ export function Layout({ activeView, onNavigate, onSignOut, onShare, userEmail, 
           <span className="nav-label">Scan</span>
         </button>
         <button
-          className={`nav-tab ${activeView === 'settings' ? 'nav-active' : ''}`}
-          onClick={() => onNavigate('settings')}
+          className={`nav-tab ${activeView === 'settings' ? 'nav-active' : ''} ${!checkedIn ? 'nav-disabled' : ''}`}
+          onClick={() => checkedIn ? onNavigate('settings') : undefined}
         >
           <span className="nav-icon">&#9881;</span>
           <span className="nav-label">Settings</span>
@@ -126,6 +127,10 @@ export function Layout({ activeView, onNavigate, onSignOut, onShare, userEmail, 
         }
         .nav-active {
           color: var(--color-primary);
+        }
+        .nav-disabled {
+          opacity: 0.3;
+          cursor: not-allowed;
         }
         .nav-icon {
           font-size: 1.3rem;
