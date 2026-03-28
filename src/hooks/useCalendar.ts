@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { DayRecord, DayStatus, AppSettings } from '../types'
 import { getMonthRecords } from '../db/attendance'
-import { getMonthRange, isFutureDate, minutesSinceMidnight, isWeekend } from '../utils/date'
+import { getMonthRange } from '../utils/date'
 import { HOLIDAYS_2026 } from '../utils/constants'
+import { computeDayStatus } from '../utils/dayStatus'
 
 export function useCalendar(settings: AppSettings | null) {
   const now = new Date()
@@ -47,31 +48,8 @@ export function useCalendar(settings: AppSettings | null) {
 
   const getDayStatus = useCallback((dateKey: string): DayStatus => {
     const record = records.get(dateKey)
-
-    // Manual day-off overrides everything
-    if (record?.isDayOff) return 'day-off'
-
-    // Check if there are actual check-ins
-    const checkIns = record?.events.filter(e => e.type === 'check-in') ?? []
-
-    // If no check-ins, check for holiday/weekend
-    if (checkIns.length === 0) {
-      if (HOLIDAYS_2026[dateKey]) return 'holiday'
-      if (isWeekend(dateKey)) return 'weekend'
-      if (isFutureDate(dateKey)) return 'future'
-      return 'no-record'
-    }
-
-    // Has check-ins — evaluate against deadline
-    if (isFutureDate(dateKey)) return 'future'
-
-    const firstCheckIn = checkIns.reduce((earliest, e) =>
-      e.timestamp < earliest.timestamp ? e : earliest
-    )
-
     const deadline = settings?.deadlineMinutes ?? 540
-    const checkInMinutes = minutesSinceMidnight(new Date(firstCheckIn.timestamp))
-    return checkInMinutes <= deadline ? 'on-time' : 'missed'
+    return computeDayStatus(dateKey, record, HOLIDAYS_2026, deadline)
   }, [records, settings])
 
   return { year, month, records, loading, prevMonth, nextMonth, getDayStatus, refresh: fetchMonth }

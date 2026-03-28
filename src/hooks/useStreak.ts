@@ -4,7 +4,7 @@ import type { DayRecord } from '../types'
 import { toDateKey, isWeekend } from '../utils/date'
 import { HOLIDAYS_2026 } from '../utils/constants'
 
-function calculateStreak(records: DayRecord[]): number {
+export function calculateStreak(records: DayRecord[]): number {
   const recordMap = new Map<string, DayRecord>()
   for (const r of records) {
     recordMap.set(r.date, r)
