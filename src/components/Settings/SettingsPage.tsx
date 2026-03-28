@@ -6,9 +6,10 @@ import { CsvExport } from './CsvExport'
 interface Props {
   settings: AppSettings
   onUpdate: (updates: Partial<AppSettings>) => Promise<void>
+  onSignOut: () => Promise<void>
 }
 
-export function SettingsPage({ settings, onUpdate }: Props) {
+export function SettingsPage({ settings, onUpdate, onSignOut }: Props) {
   const [showRegistration, setShowRegistration] = useState(false)
 
   const hours = Math.floor(settings.deadlineMinutes / 60)
@@ -74,6 +75,14 @@ export function SettingsPage({ settings, onUpdate }: Props) {
         <label className="settings-label">Export Data</label>
         <p className="settings-hint">Download all attendance records as CSV</p>
         <CsvExport />
+      </div>
+
+      <div className="settings-group">
+        <label className="settings-label">Account</label>
+        <p className="settings-hint">Sign out of your Google account</p>
+        <button className="btn btn-danger" onClick={onSignOut}>
+          Sign Out
+        </button>
       </div>
 
       <style>{`

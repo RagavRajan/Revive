@@ -1,25 +1,46 @@
+import { doc, getDoc, setDoc, collection, getDocs, query, where, orderBy } from 'firebase/firestore'
 import type { AttendanceEvent, DayRecord } from '../types'
-import { getDB } from './connection'
+import { db, getCurrentUser } from './connection'
+
+function daysCollection() {
+  const user = getCurrentUser()
+  if (!user) throw new Error('Not authenticated')
+  return collection(db, 'users', user.uid, 'days')
+}
+
+function dayDoc(dateKey: string) {
+  const user = getCurrentUser()
+  if (!user) throw new Error('Not authenticated')
+  return doc(db, 'users', user.uid, 'days', dateKey)
+}
 
 export async function getDayRecord(dateKey: string): Promise<DayRecord | undefined> {
-  const db = await getDB()
-  return db.get('days', dateKey)
+  const snap = await getDoc(dayDoc(dateKey))
+  if (snap.exists()) {
+    return snap.data() as DayRecord
+  }
+  return undefined
 }
 
 export async function saveDayRecord(record: DayRecord): Promise<void> {
-  const db = await getDB()
-  await db.put('days', record, record.date)
+  await setDoc(dayDoc(record.date), record)
 }
 
 export async function getMonthRecords(start: string, end: string): Promise<DayRecord[]> {
-  const db = await getDB()
-  const range = IDBKeyRange.bound(start, end)
-  return db.getAll('days', range)
+  const q = query(
+    daysCollection(),
+    where('date', '>=', start),
+    where('date', '<=', end),
+    orderBy('date')
+  )
+  const snap = await getDocs(q)
+  return snap.docs.map(d => d.data() as DayRecord)
 }
 
 export async function getAllRecords(): Promise<DayRecord[]> {
-  const db = await getDB()
-  return db.getAll('days')
+  const q = query(daysCollection(), orderBy('date'))
+  const snap = await getDocs(q)
+  return snap.docs.map(d => d.data() as DayRecord)
 }
 
 export async function addEvent(dateKey: string, event: AttendanceEvent): Promise<DayRecord> {

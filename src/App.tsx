@@ -1,24 +1,25 @@
 import { useState, useEffect, useCallback } from 'react'
+import type { User } from 'firebase/auth'
 import type { ActiveView } from './types'
+import { onAuthChange, signOut } from './firebase/auth'
 import { useSettings } from './hooks/useSettings'
 import { useAttendance } from './hooks/useAttendance'
 import { useMidnightAutoClose } from './hooks/useMidnightAutoClose'
 import { preloadSounds } from './utils/sound'
 import { Layout } from './components/Layout'
+import { LoginScreen } from './components/Auth/LoginScreen'
 import { CalendarGrid } from './components/Calendar/CalendarGrid'
 import { ScannerView } from './components/Scanner/ScannerView'
 import { BarcodeRegistration } from './components/Scanner/BarcodeRegistration'
 import { SettingsPage } from './components/Settings/SettingsPage'
 
-function App() {
+function AuthenticatedApp() {
   const [activeView, setActiveView] = useState<ActiveView>('calendar')
   const { settings, loading: settingsLoading, updateSettings } = useSettings()
   const { checkedIn, recordScan, refresh: refreshAttendance } = useAttendance()
 
-  // Preload sounds on mount
   useEffect(() => { preloadSounds() }, [])
 
-  // Auto-close open sessions at midnight
   const handleAutoClose = useCallback(() => {
     refreshAttendance()
   }, [refreshAttendance])
@@ -32,7 +33,6 @@ function App() {
     )
   }
 
-  // First-launch: no barcode registered
   if (!settings?.registeredBarcode) {
     return (
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
@@ -59,10 +59,38 @@ function App() {
         <SettingsPage
           settings={settings}
           onUpdate={updateSettings}
+          onSignOut={signOut}
         />
       )}
     </Layout>
   )
+}
+
+function App() {
+  const [user, setUser] = useState<User | null>(null)
+  const [authLoading, setAuthLoading] = useState(true)
+
+  useEffect(() => {
+    const unsubscribe = onAuthChange((u) => {
+      setUser(u)
+      setAuthLoading(false)
+    })
+    return unsubscribe
+  }, [])
+
+  if (authLoading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--color-text-muted)' }}>
+        Loading...
+      </div>
+    )
+  }
+
+  if (!user) {
+    return <LoginScreen />
+  }
+
+  return <AuthenticatedApp />
 }
 
 export default App

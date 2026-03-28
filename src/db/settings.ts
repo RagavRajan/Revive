@@ -1,19 +1,27 @@
+import { doc, getDoc, setDoc } from 'firebase/firestore'
 import type { AppSettings } from '../types'
-import { getDB } from './connection'
-import { DEFAULT_DEADLINE_MINUTES, SETTINGS_KEY } from '../utils/constants'
+import { db, getCurrentUser } from './connection'
+import { DEFAULT_DEADLINE_MINUTES } from '../utils/constants'
 
 const DEFAULT_SETTINGS: AppSettings = {
   registeredBarcode: null,
   deadlineMinutes: DEFAULT_DEADLINE_MINUTES,
 }
 
+function settingsDoc() {
+  const user = getCurrentUser()
+  if (!user) throw new Error('Not authenticated')
+  return doc(db, 'users', user.uid, 'settings', 'app')
+}
+
 export async function getSettings(): Promise<AppSettings> {
-  const db = await getDB()
-  const settings = await db.get('settings', SETTINGS_KEY)
-  return settings ?? DEFAULT_SETTINGS
+  const snap = await getDoc(settingsDoc())
+  if (snap.exists()) {
+    return snap.data() as AppSettings
+  }
+  return DEFAULT_SETTINGS
 }
 
 export async function saveSettings(settings: AppSettings): Promise<void> {
-  const db = await getDB()
-  await db.put('settings', settings, SETTINGS_KEY)
+  await setDoc(settingsDoc(), settings)
 }
