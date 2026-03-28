@@ -15,7 +15,9 @@ export function Layout({ activeView, onNavigate, onSignOut, userEmail, children 
         <h1 className="layout-title">Revive</h1>
         <div className="layout-user">
           {userEmail && <span className="layout-email">{userEmail}</span>}
-          <button className="layout-signout" onClick={onSignOut}>Sign Out</button>
+          <button className="layout-signout" onClick={() => {
+            if (window.confirm('Are you sure you want to sign out?')) onSignOut()
+          }}>Sign Out</button>
         </div>
       </header>
 
