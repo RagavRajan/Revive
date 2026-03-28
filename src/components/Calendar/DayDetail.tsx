@@ -92,9 +92,8 @@ export function DayDetail({ dateKey, onClose, onUpdate, readOnly, uid }: Props) 
               }
               return sessions.map((s, i) => (
                 <div key={s.checkIn.id} className="session-row">
-                  <span className="session-num">#{i + 1}</span>
                   <div className="session-in">
-                    <span className="session-type-label">Check-In</span>
+                    <span className="session-type-label">#{i + 1} Check-In</span>
                     <span className="session-dot dot-in" />
                     {formatTime(s.checkIn.timestamp)}
                   </div>
@@ -196,25 +195,20 @@ export function DayDetail({ dateKey, onClose, onUpdate, readOnly, uid }: Props) 
           color: white;
         }
         .day-detail-sessions {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
+          background: var(--color-bg);
+          border-radius: var(--radius);
+          overflow: hidden;
         }
         .session-row {
           display: flex;
           align-items: center;
           justify-content: space-between;
           gap: 12px;
-          background: var(--color-bg);
           padding: 10px 12px;
-          border-radius: var(--radius);
           font-size: 0.9rem;
         }
-        .session-num {
-          color: var(--color-text-muted);
-          font-size: 0.75rem;
-          font-weight: 600;
-          min-width: 20px;
+        .session-row + .session-row {
+          border-top: 1px solid var(--color-border);
         }
         .session-in, .session-out {
           display: flex;
