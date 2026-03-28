@@ -63,3 +63,24 @@ export function isWeekend(dateKey: string): boolean {
   const day = fromDateKey(dateKey).getDay()
   return day === 0 || day === 6
 }
+
+export function getRemainingWorkingDays(holidays: Record<string, string>): number {
+  const today = new Date()
+  const year = today.getFullYear()
+  const endOfYear = new Date(year, 11, 31)
+  let count = 0
+
+  const d = new Date(today)
+  d.setDate(d.getDate() + 1) // start from tomorrow
+
+  while (d <= endOfYear) {
+    const key = toDateKey(d)
+    const day = d.getDay()
+    if (day !== 0 && day !== 6 && !holidays[key]) {
+      count++
+    }
+    d.setDate(d.getDate() + 1)
+  }
+
+  return count
+}
