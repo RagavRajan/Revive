@@ -174,8 +174,19 @@ export function SharedCalendarView({ uid }: Props) {
           </div>
         )}
         <div className="calendar-footer">
-          <div className="calendar-remaining">
-            <span>{remainingDays}/{totalDays}</span> working days remaining in {currentYear}
+          <div className="progress-bar-container">
+            <div className="progress-bar-track">
+              <div
+                className="progress-bar-fill"
+                style={{
+                  width: `${totalDays > 0 ? (remainingDays / totalDays) * 100 : 0}%`,
+                  background: `hsl(${Math.round((totalDays > 0 ? (remainingDays / totalDays) : 0) * 100 * 1.2)}, 70%, 50%)`,
+                }}
+              />
+            </div>
+            <div className="progress-bar-label">
+              <span style={{ color: `hsl(${Math.round((totalDays > 0 ? (remainingDays / totalDays) : 0) * 100 * 1.2)}, 70%, 50%)` }}>{remainingDays}</span>/{totalDays} working days remaining
+            </div>
           </div>
           <div className="calendar-streak">
             <span className="streak-icon">&#128293;</span>
@@ -239,15 +250,30 @@ export function SharedCalendarView({ uid }: Props) {
           align-items: center;
           gap: 6px;
         }
-        .calendar-remaining {
+        .progress-bar-container {
+          width: 100%;
+        }
+        .progress-bar-track {
+          width: 100%;
+          height: 8px;
+          background: var(--color-surface);
+          border-radius: 4px;
+          overflow: hidden;
+        }
+        .progress-bar-fill {
+          height: 100%;
+          border-radius: 4px;
+          transition: width 0.5s ease, background 0.5s ease;
+        }
+        .progress-bar-label {
           text-align: center;
           color: var(--color-text-muted);
-          font-size: 0.85rem;
+          font-size: 0.8rem;
+          margin-top: 6px;
         }
-        .calendar-remaining span {
-          color: var(--color-primary);
+        .progress-bar-label span {
           font-weight: 700;
-          font-size: 1.1rem;
+          font-size: 0.95rem;
         }
         .calendar-streak {
           text-align: center;
