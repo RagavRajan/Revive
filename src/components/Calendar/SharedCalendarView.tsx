@@ -12,6 +12,45 @@ interface Props {
   uid: string
 }
 
+function calculateStreak(allRecords: DayRecord[]): number {
+  const recordMap = new Map<string, DayRecord>()
+  for (const r of allRecords) {
+    recordMap.set(r.date, r)
+  }
+
+  let streak = 0
+  const d = new Date()
+
+  const todayKey = toDateKey(d)
+  const todayRecord = recordMap.get(todayKey)
+  const todayHasCheckIn = todayRecord?.events.some(e => e.type === 'check-in') ?? false
+
+  if (!todayHasCheckIn) {
+    d.setDate(d.getDate() - 1)
+  }
+
+  while (true) {
+    const key = toDateKey(d)
+    const record = recordMap.get(key)
+
+    if (isWeekend(key) || HOLIDAYS_2026[key] || record?.isDayOff) {
+      d.setDate(d.getDate() - 1)
+      continue
+    }
+
+    const hasCheckIn = record?.events.some(e => e.type === 'check-in') ?? false
+
+    if (hasCheckIn) {
+      streak++
+      d.setDate(d.getDate() - 1)
+    } else {
+      break
+    }
+  }
+
+  return streak
+}
+
 export function SharedCalendarView({ uid }: Props) {
   const now = new Date()
   const [year, setYear] = useState(now.getFullYear())
@@ -21,6 +60,7 @@ export function SharedCalendarView({ uid }: Props) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
+  const [streak, setStreak] = useState(0)
 
   const currentYear = now.getFullYear()
   const remainingDays = useMemo(() => getRemainingWorkingDays(HOLIDAYS_2026), [])
@@ -34,6 +74,16 @@ export function SharedCalendarView({ uid }: Props) {
         setSettings(snap.data() as AppSettings)
       }
     }).catch(() => setError('Could not load calendar'))
+  }, [uid])
+
+  // Load all records for streak calculation
+  useEffect(() => {
+    const daysRef = collection(db, 'users', uid, 'days')
+    const q = query(daysRef, orderBy('date'))
+    getDocs(q).then(snap => {
+      const all = snap.docs.map(d => d.data() as DayRecord)
+      setStreak(calculateStreak(all))
+    }).catch(() => {})
   }, [uid])
 
   // Load month records
@@ -123,8 +173,14 @@ export function SharedCalendarView({ uid }: Props) {
             {cells}
           </div>
         )}
-        <div className="calendar-remaining">
-          <span>{remainingDays}/{totalDays}</span> working days remaining in {currentYear}
+        <div className="calendar-footer">
+          <div className="calendar-remaining">
+            <span>{remainingDays}/{totalDays}</span> working days remaining in {currentYear}
+          </div>
+          <div className="calendar-streak">
+            <span className="streak-icon">&#128293;</span>
+            <span className="streak-count">{streak}</span> day streak
+          </div>
         </div>
       </div>
 
@@ -176,14 +232,36 @@ export function SharedCalendarView({ uid }: Props) {
           margin: 0 auto;
           flex: 1;
         }
+        .calendar-footer {
+          margin-top: 16px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 6px;
+        }
         .calendar-remaining {
           text-align: center;
           color: var(--color-text-muted);
           font-size: 0.85rem;
-          margin-top: 16px;
         }
         .calendar-remaining span {
           color: var(--color-primary);
+          font-weight: 700;
+          font-size: 1.1rem;
+        }
+        .calendar-streak {
+          text-align: center;
+          color: var(--color-text-muted);
+          font-size: 0.85rem;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
+        .streak-icon {
+          font-size: 1rem;
+        }
+        .streak-count {
+          color: #ff9800;
           font-weight: 700;
           font-size: 1.1rem;
         }

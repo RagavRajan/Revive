@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import type { AppSettings } from '../../types'
 import { useCalendar } from '../../hooks/useCalendar'
+import { useStreak } from '../../hooks/useStreak'
 import { getDaysInMonth, getFirstDayOfWeek, toDateKey, getRemainingWorkingDays, getTotalWorkingDays } from '../../utils/date'
 import { HOLIDAYS_2026 } from '../../utils/constants'
 import { MonthNavigator } from './MonthNavigator'
@@ -15,6 +16,7 @@ const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
 export function CalendarGrid({ settings }: Props) {
   const { year, month, prevMonth, nextMonth, getDayStatus, refresh } = useCalendar(settings)
+  const { streak, refresh: refreshStreak } = useStreak()
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
   const currentYear = new Date().getFullYear()
   const remainingDays = useMemo(() => getRemainingWorkingDays(HOLIDAYS_2026), [])
@@ -33,6 +35,7 @@ export function CalendarGrid({ settings }: Props) {
 
   const handleDetailUpdate = () => {
     refresh()
+    refreshStreak()
   }
 
   // Build grid cells
@@ -74,8 +77,14 @@ export function CalendarGrid({ settings }: Props) {
         {cells}
       </div>
 
-      <div className="calendar-remaining">
-        <span>{remainingDays}/{totalDays}</span> working days remaining in {currentYear}
+      <div className="calendar-footer">
+        <div className="calendar-remaining">
+          <span>{remainingDays}/{totalDays}</span> working days remaining in {currentYear}
+        </div>
+        <div className="calendar-streak">
+          <span className="streak-icon">&#128293;</span>
+          <span className="streak-count">{streak}</span> day streak
+        </div>
       </div>
 
       {selectedDay && (
@@ -93,14 +102,36 @@ export function CalendarGrid({ settings }: Props) {
           width: 100%;
           margin: 0 auto;
         }
+        .calendar-footer {
+          margin-top: 16px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 6px;
+        }
         .calendar-remaining {
           text-align: center;
           color: var(--color-text-muted);
           font-size: 0.85rem;
-          margin-top: 16px;
         }
         .calendar-remaining span {
           color: var(--color-primary);
+          font-weight: 700;
+          font-size: 1.1rem;
+        }
+        .calendar-streak {
+          text-align: center;
+          color: var(--color-text-muted);
+          font-size: 0.85rem;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
+        .streak-icon {
+          font-size: 1rem;
+        }
+        .streak-count {
+          color: #ff9800;
           font-weight: 700;
           font-size: 1.1rem;
         }
