@@ -11,9 +11,10 @@ interface Props {
 export function CalendarDay({ dateKey, dayNumber, status, onClick }: Props) {
   const today = isToday(dateKey)
 
+  const attended = status === 'on-time' || status === 'missed'
+
   const statusClass =
-    status === 'on-time' ? 'day-on-time' :
-    status === 'missed' ? 'day-missed' :
+    attended ? 'day-attended' :
     status === 'day-off' ? 'day-off' :
     status === 'future' ? 'day-future' :
     'day-empty'
@@ -24,8 +25,7 @@ export function CalendarDay({ dateKey, dayNumber, status, onClick }: Props) {
       onClick={() => onClick(dateKey)}
     >
       <span className="day-number">{dayNumber}</span>
-      {status === 'on-time' && <span className="day-icon">&#10003;</span>}
-      {status === 'missed' && <span className="day-icon">&#10007;</span>}
+      {attended && <span className="day-icon">&#10003;</span>}
       {status === 'day-off' && <span className="day-icon">&mdash;</span>}
 
       <style>{`
@@ -55,13 +55,9 @@ export function CalendarDay({ dateKey, dayNumber, status, onClick }: Props) {
           font-size: 0.7rem;
           line-height: 1;
         }
-        .day-on-time {
+        .day-attended {
           background: var(--color-success-bg);
           color: var(--color-success);
-        }
-        .day-missed {
-          background: var(--color-danger-bg);
-          color: var(--color-danger);
         }
         .day-off {
           color: var(--color-day-off);
