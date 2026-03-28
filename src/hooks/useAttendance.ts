@@ -17,6 +17,7 @@ export function useAttendance() {
   }, [refresh])
 
   const checkedIn = isCheckedIn(todayRecord)
+  const hasCheckedInToday = todayRecord?.events.some(e => e.type === 'check-in') ?? false
 
   const recordScan = useCallback(async () => {
     const eventType = checkedIn ? 'check-out' : 'check-in'
@@ -36,5 +37,5 @@ export function useAttendance() {
     setTodayRecord(updated)
   }, [])
 
-  return { todayRecord, checkedIn, loading, recordScan, toggleTodayDayOff, refresh }
+  return { todayRecord, checkedIn, hasCheckedInToday, loading, recordScan, toggleTodayDayOff, refresh }
 }

@@ -25,8 +25,8 @@ function getSharedUid(): string | null {
 function AuthenticatedApp({ user }: { user: User }) {
   const [activeView, setActiveView] = useState<ActiveView>('calendar')
   const { settings, loading: settingsLoading, updateSettings } = useSettings()
-  const { checkedIn, recordScan, refresh: refreshAttendance } = useAttendance()
-  const { bannerVisible, dismissBanner } = useReminder(settings, checkedIn)
+  const { checkedIn, hasCheckedInToday, recordScan, refresh: refreshAttendance } = useAttendance()
+  const { bannerVisible, dismissBanner } = useReminder(settings, hasCheckedInToday)
 
   useEffect(() => { preloadSounds() }, [])
 
