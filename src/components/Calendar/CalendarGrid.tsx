@@ -23,6 +23,7 @@ export function CalendarGrid({ settings, updateSettings }: Props) {
   const { streak, bestStreak, refresh: refreshStreak } = useStreak({ settings, updateSettings })
   const { activeMilestone, dismissMilestone } = useMilestones({ streak, settings, updateSettings })
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
+  const [statsOpen, setStatsOpen] = useState(false)
   const currentYear = new Date().getFullYear()
   const remainingDays = useMemo(() => getRemainingWorkingDays(HOLIDAYS_2026), [])
   const totalDays = useMemo(() => getTotalWorkingDays(currentYear, HOLIDAYS_2026), [currentYear])
@@ -54,41 +55,16 @@ export function CalendarGrid({ settings, updateSettings }: Props) {
 
   return (
     <div className="calendar">
-      <div className="calendar-streak">
-        <span className="streak-icon">&#128293;</span>
-        <span className="streak-count">{streak}</span>
-        <span className="streak-label">day streak</span>
-        {bestStreak > 0 && (
-          <span className="streak-best">
-            {streakIsBest ? '(personal best!)' : `(best: ${bestStreak})`}
-          </span>
-        )}
+      <div className="calendar-top">
+        <MonthNavigator year={year} month={month} onPrev={prevMonth} onNext={nextMonth} />
+        <button className="stats-toggle" onClick={() => setStatsOpen(true)}>Stats</button>
       </div>
-
-      <MonthNavigator year={year} month={month} onPrev={prevMonth} onNext={nextMonth} />
 
       <div className="calendar-grid">
         {DAY_LABELS.map(label => (
           <div key={label} className="calendar-header">{label}</div>
         ))}
         {cells}
-      </div>
-
-      {monthly.totalWorking > 0 && (
-        <div className="monthly-stats">
-          {monthly.attended}/{monthly.totalWorking} days — {monthly.percentage}%
-        </div>
-      )}
-
-      <div className="calendar-footer">
-        <div className="progress-bar-container">
-          <div className="progress-bar-track">
-            <div className="progress-bar-fill" style={{ width: `${remainingPct}%`, background: `hsl(${barHue}, 70%, 50%)` }} />
-          </div>
-          <div className="progress-bar-label">
-            <span style={{ color: `hsl(${barHue}, 70%, 50%)` }}>{remainingDays}</span>/{totalDays} working days remaining
-          </div>
-        </div>
       </div>
 
       {selectedDay && (
@@ -99,6 +75,48 @@ export function CalendarGrid({ settings, updateSettings }: Props) {
         <MilestoneCelebration milestone={activeMilestone} onDismiss={dismissMilestone} />
       )}
 
+      {/* Stats Sidebar */}
+      {statsOpen && <div className="stats-backdrop" onClick={() => setStatsOpen(false)} />}
+      <div className={`stats-sidebar ${statsOpen ? 'stats-open' : ''}`}>
+        <div className="stats-header">
+          <h3>Stats</h3>
+          <button className="stats-close" onClick={() => setStatsOpen(false)}>&times;</button>
+        </div>
+
+        <div className="stats-section">
+          <div className="stats-streak">
+            <span className="streak-icon">&#128293;</span>
+            <span className="streak-count">{streak}</span>
+            <span className="streak-label">day streak</span>
+          </div>
+          {bestStreak > 0 && (
+            <div className="streak-best">
+              {streakIsBest ? 'Personal best!' : `Best: ${bestStreak} days`}
+            </div>
+          )}
+        </div>
+
+        {monthly.totalWorking > 0 && (
+          <div className="stats-section">
+            <div className="stats-section-title">This Month</div>
+            <div className="stats-monthly">
+              <span className="stats-monthly-num">{monthly.attended}/{monthly.totalWorking}</span>
+              <span className="stats-monthly-pct">{monthly.percentage}%</span>
+            </div>
+          </div>
+        )}
+
+        <div className="stats-section">
+          <div className="stats-section-title">Year Progress</div>
+          <div className="progress-bar-track">
+            <div className="progress-bar-fill" style={{ width: `${remainingPct}%`, background: `hsl(${barHue}, 70%, 50%)` }} />
+          </div>
+          <div className="progress-bar-label">
+            <span style={{ color: `hsl(${barHue}, 70%, 50%)` }}>{remainingDays}</span>/{totalDays} remaining
+          </div>
+        </div>
+      </div>
+
       <style>{`
         .calendar {
           padding: 24px 32px;
@@ -106,35 +124,118 @@ export function CalendarGrid({ settings, updateSettings }: Props) {
           width: 100%;
           margin: 0 auto;
         }
-        .calendar-streak {
-          text-align: center;
+        .calendar-top {
+          display: flex;
+          align-items: center;
+          margin-bottom: 8px;
+        }
+        .calendar-top > :first-child {
+          flex: 1;
+        }
+        .stats-toggle {
+          padding: 8px 16px;
+          border-radius: var(--radius);
+          background: var(--color-surface);
+          color: var(--color-text-muted);
+          font-size: 0.85rem;
+          font-weight: 500;
+          transition: background var(--transition);
+        }
+        .stats-toggle:hover {
+          background: var(--color-surface-hover);
+          color: var(--color-text);
+        }
+        .stats-backdrop {
+          position: fixed;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.4);
+          z-index: 60;
+        }
+        .stats-sidebar {
+          position: fixed;
+          top: 0;
+          right: 0;
+          bottom: 0;
+          width: 300px;
+          max-width: 85vw;
+          background: var(--color-bg);
+          border-left: 1px solid var(--color-border);
+          z-index: 70;
+          transform: translateX(100%);
+          transition: transform 0.25s ease;
+          overflow-y: auto;
+          padding: 24px;
+        }
+        .stats-open {
+          transform: translateX(0);
+        }
+        .stats-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 24px;
+        }
+        .stats-header h3 {
+          font-size: 1.2rem;
+          font-weight: 700;
+        }
+        .stats-close {
+          font-size: 1.5rem;
+          width: 32px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: var(--radius);
+        }
+        .stats-close:hover {
+          background: var(--color-surface-hover);
+        }
+        .stats-section {
+          background: var(--color-surface);
+          border-radius: var(--radius-lg);
+          padding: 16px;
+          margin-bottom: 16px;
+        }
+        .stats-section-title {
+          font-size: 0.75rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          color: var(--color-text-muted);
+          margin-bottom: 10px;
+        }
+        .stats-streak {
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 8px;
-          margin-bottom: 20px;
-          flex-wrap: wrap;
         }
-        .streak-icon { font-size: 2rem; }
-        .streak-count { color: #ff9800; font-weight: 800; font-size: 2.5rem; line-height: 1; }
-        .streak-label { color: var(--color-text-muted); font-size: 1rem; font-weight: 500; }
-        .streak-best { color: var(--color-text-muted); font-size: 0.8rem; }
-        .monthly-stats {
+        .streak-icon { font-size: 1.8rem; }
+        .streak-count { color: #ff9800; font-weight: 800; font-size: 2.2rem; line-height: 1; }
+        .streak-label { color: var(--color-text-muted); font-size: 0.95rem; font-weight: 500; }
+        .streak-best {
           text-align: center;
           color: var(--color-text-muted);
-          font-size: 0.9rem;
-          margin-top: 12px;
-          font-weight: 500;
+          font-size: 0.8rem;
+          margin-top: 6px;
         }
-        .calendar-footer {
-          margin-top: 12px;
+        .stats-monthly {
           display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 6px;
+          align-items: baseline;
+          justify-content: space-between;
         }
-        .progress-bar-container { width: 100%; }
-        .progress-bar-track { width: 100%; height: 8px; background: var(--color-surface); border-radius: 4px; overflow: hidden; }
+        .stats-monthly-num {
+          font-size: 1.3rem;
+          font-weight: 700;
+          color: var(--color-text);
+        }
+        .stats-monthly-pct {
+          font-size: 1.3rem;
+          font-weight: 700;
+          color: var(--color-primary);
+        }
+        .progress-bar-track { width: 100%; height: 8px; background: var(--color-surface-hover); border-radius: 4px; overflow: hidden; }
         .progress-bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease, background 0.5s ease; }
         .progress-bar-label { text-align: center; color: var(--color-text-muted); font-size: 0.8rem; margin-top: 6px; }
         .progress-bar-label span { font-weight: 700; font-size: 0.95rem; }
