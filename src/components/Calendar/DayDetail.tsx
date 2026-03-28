@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react'
+import { doc, getDoc } from 'firebase/firestore'
+import { db } from '../../firebase/config'
 import type { DayRecord } from '../../types'
 import { getDayRecord, toggleDayOff } from '../../db/attendance'
 import { formatTime, fromDateKey } from '../../utils/date'
@@ -7,14 +9,22 @@ interface Props {
   dateKey: string
   onClose: () => void
   onUpdate: () => void
+  readOnly?: boolean
+  uid?: string
 }
 
-export function DayDetail({ dateKey, onClose, onUpdate }: Props) {
+export function DayDetail({ dateKey, onClose, onUpdate, readOnly, uid }: Props) {
   const [record, setRecord] = useState<DayRecord | null>(null)
 
   useEffect(() => {
-    getDayRecord(dateKey).then(r => setRecord(r ?? null))
-  }, [dateKey])
+    if (readOnly && uid) {
+      // Shared view: read directly from Firestore with the uid
+      const ref = doc(db, 'users', uid, 'days', dateKey)
+      getDoc(ref).then(snap => setRecord(snap.exists() ? snap.data() as DayRecord : null))
+    } else {
+      getDayRecord(dateKey).then(r => setRecord(r ?? null))
+    }
+  }, [dateKey, readOnly, uid])
 
   const date = fromDateKey(dateKey)
   const formatted = new Intl.DateTimeFormat('en-US', {
@@ -65,13 +75,15 @@ export function DayDetail({ dateKey, onClose, onUpdate }: Props) {
           <p className="day-detail-empty">No events recorded</p>
         )}
 
-        <button
-          className={`btn ${record?.isDayOff ? 'btn-outline' : 'btn-primary'}`}
-          onClick={handleToggleDayOff}
-          style={{ width: '100%', marginTop: 16 }}
-        >
-          {record?.isDayOff ? 'Remove Day Off' : 'Mark as Day Off'}
-        </button>
+        {!readOnly && (
+          <button
+            className={`btn ${record?.isDayOff ? 'btn-outline' : 'btn-primary'}`}
+            onClick={handleToggleDayOff}
+            style={{ width: '100%', marginTop: 16 }}
+          >
+            {record?.isDayOff ? 'Remove Day Off' : 'Mark as Day Off'}
+          </button>
+        )}
       </div>
 
       <style>{`

@@ -4,17 +4,19 @@ interface Props {
   activeView: ActiveView
   onNavigate: (view: ActiveView) => void
   onSignOut: () => Promise<void>
+  onShare: () => void
   userEmail?: string | null
   children: React.ReactNode
 }
 
-export function Layout({ activeView, onNavigate, onSignOut, userEmail, children }: Props) {
+export function Layout({ activeView, onNavigate, onSignOut, onShare, userEmail, children }: Props) {
   return (
     <div className="layout">
       <header className="layout-header">
         <h1 className="layout-title">Revive</h1>
         <div className="layout-user">
           {userEmail && <span className="layout-email">{userEmail}</span>}
+          <button className="layout-share" onClick={onShare}>Share</button>
           <button className="layout-signout" onClick={() => {
             if (window.confirm('Are you sure you want to sign out?')) onSignOut()
           }}>Sign Out</button>
@@ -76,6 +78,17 @@ export function Layout({ activeView, onNavigate, onSignOut, userEmail, children 
         .layout-email {
           color: var(--color-text-muted);
           font-size: 0.8rem;
+        }
+        .layout-share {
+          font-size: 0.8rem;
+          color: var(--color-primary);
+          padding: 6px 12px;
+          border: 1px solid var(--color-primary);
+          border-radius: var(--radius);
+          transition: background var(--transition);
+        }
+        .layout-share:hover {
+          background: rgba(108, 99, 255, 0.15);
         }
         .layout-signout {
           font-size: 0.8rem;
