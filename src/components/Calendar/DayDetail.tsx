@@ -231,6 +231,9 @@ export function DayDetail({ dateKey, onClose, onUpdate, readOnly, uid }: Props) 
         }
         .session-col {
           flex: 1;
+          display: flex;
+          align-items: center;
+          gap: 6px;
         }
         .session-dot {
           width: 8px;
