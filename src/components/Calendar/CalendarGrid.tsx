@@ -14,16 +14,17 @@ import { MilestoneCelebration } from '../Celebrations/MilestoneCelebration'
 interface Props {
   settings: AppSettings | null
   updateSettings: (updates: Partial<AppSettings>) => Promise<void>
+  statsOpen: boolean
+  onStatsClose: () => void
 }
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
-export function CalendarGrid({ settings, updateSettings }: Props) {
+export function CalendarGrid({ settings, updateSettings, statsOpen, onStatsClose }: Props) {
   const { year, month, records, prevMonth, nextMonth, getDayStatus, refresh } = useCalendar(settings)
   const { streak, bestStreak, refresh: refreshStreak } = useStreak({ settings, updateSettings })
   const { activeMilestone, dismissMilestone } = useMilestones({ streak, settings, updateSettings })
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
-  const [statsOpen, setStatsOpen] = useState(false)
   const currentYear = new Date().getFullYear()
   const remainingDays = useMemo(() => getRemainingWorkingDays(HOLIDAYS_2026), [])
   const totalDays = useMemo(() => getTotalWorkingDays(currentYear, HOLIDAYS_2026), [currentYear])
@@ -55,10 +56,7 @@ export function CalendarGrid({ settings, updateSettings }: Props) {
 
   return (
     <div className="calendar">
-      <div className="calendar-top">
-        <MonthNavigator year={year} month={month} onPrev={prevMonth} onNext={nextMonth} />
-        <button className="stats-toggle" onClick={() => setStatsOpen(true)}>Stats</button>
-      </div>
+      <MonthNavigator year={year} month={month} onPrev={prevMonth} onNext={nextMonth} />
 
       <div className="calendar-grid">
         {DAY_LABELS.map(label => (
@@ -76,11 +74,11 @@ export function CalendarGrid({ settings, updateSettings }: Props) {
       )}
 
       {/* Stats Sidebar */}
-      {statsOpen && <div className="stats-backdrop" onClick={() => setStatsOpen(false)} />}
+      {statsOpen && <div className="stats-backdrop" onClick={() => onStatsClose()} />}
       <div className={`stats-sidebar ${statsOpen ? 'stats-open' : ''}`}>
         <div className="stats-header">
           <h3>Stats</h3>
-          <button className="stats-close" onClick={() => setStatsOpen(false)}>&times;</button>
+          <button className="stats-close" onClick={() => onStatsClose()}>&times;</button>
         </div>
 
         <div className="stats-section">
@@ -123,27 +121,6 @@ export function CalendarGrid({ settings, updateSettings }: Props) {
           max-width: 700px;
           width: 100%;
           margin: 0 auto;
-        }
-        .calendar-top {
-          display: flex;
-          align-items: center;
-          margin-bottom: 8px;
-        }
-        .calendar-top > :first-child {
-          flex: 1;
-        }
-        .stats-toggle {
-          padding: 8px 16px;
-          border-radius: var(--radius);
-          background: var(--color-surface);
-          color: var(--color-text-muted);
-          font-size: 0.85rem;
-          font-weight: 500;
-          transition: background var(--transition);
-        }
-        .stats-toggle:hover {
-          background: var(--color-surface-hover);
-          color: var(--color-text);
         }
         .stats-backdrop {
           position: fixed;

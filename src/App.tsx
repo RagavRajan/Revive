@@ -24,6 +24,7 @@ function getSharedUid(): string | null {
 
 function AuthenticatedApp({ user }: { user: User }) {
   const [activeView, setActiveView] = useState<ActiveView>('calendar')
+  const [statsOpen, setStatsOpen] = useState(false)
   const { settings, loading: settingsLoading, updateSettings } = useSettings()
   const { checkedIn, hasCheckedInToday, recordScan, refresh: refreshAttendance } = useAttendance()
   const { bannerVisible, dismissBanner } = useReminder(settings, hasCheckedInToday)
@@ -64,10 +65,10 @@ function AuthenticatedApp({ user }: { user: User }) {
   }
 
   return (
-    <Layout activeView={activeView} onNavigate={setActiveView} onSignOut={signOut} userEmail={user.email} onShare={handleShare} checkedIn={checkedIn}>
+    <Layout activeView={activeView} onNavigate={setActiveView} onSignOut={signOut} userEmail={user.email} onShare={handleShare} onStats={() => setStatsOpen(true)} checkedIn={checkedIn}>
       {bannerVisible && <ReminderBanner onDismiss={dismissBanner} />}
       {activeView === 'calendar' && (
-        <CalendarGrid settings={settings} updateSettings={updateSettings} />
+        <CalendarGrid settings={settings} updateSettings={updateSettings} statsOpen={statsOpen} onStatsClose={() => setStatsOpen(false)} />
       )}
       {activeView === 'scanner' && (
         <ScannerView

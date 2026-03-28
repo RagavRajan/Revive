@@ -5,18 +5,20 @@ interface Props {
   onNavigate: (view: ActiveView) => void
   onSignOut: () => Promise<void>
   onShare: () => void
+  onStats?: () => void
   userEmail?: string | null
   checkedIn: boolean
   children: React.ReactNode
 }
 
-export function Layout({ activeView, onNavigate, onSignOut, onShare, userEmail, checkedIn, children }: Props) {
+export function Layout({ activeView, onNavigate, onSignOut, onShare, onStats, userEmail, checkedIn, children }: Props) {
   return (
     <div className="layout">
       <header className="layout-header">
         <h1 className="layout-title">Revive</h1>
         <div className="layout-user">
           {userEmail && <span className="layout-email">{userEmail}</span>}
+          {onStats && <button className="layout-stats" onClick={onStats}>Stats</button>}
           <button className="layout-share" onClick={onShare}>Share</button>
           <button className="layout-signout" onClick={() => {
             if (window.confirm('Are you sure you want to sign out?')) onSignOut()
@@ -79,6 +81,17 @@ export function Layout({ activeView, onNavigate, onSignOut, onShare, userEmail, 
         .layout-email {
           color: var(--color-text-muted);
           font-size: 0.8rem;
+        }
+        .layout-stats {
+          font-size: 0.8rem;
+          color: var(--color-text);
+          padding: 6px 12px;
+          border: 1px solid var(--color-border);
+          border-radius: var(--radius);
+          transition: background var(--transition);
+        }
+        .layout-stats:hover {
+          background: var(--color-surface-hover);
         }
         .layout-share {
           font-size: 0.8rem;
