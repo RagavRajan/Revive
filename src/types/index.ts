@@ -14,6 +14,9 @@ export interface DayRecord {
 export interface AppSettings {
   registeredBarcode: string | null
   deadlineMinutes: number // minutes since midnight (540 = 9:00 AM)
+  bestStreak: number
+  reminderMinutes: number | null // null = disabled
+  shownMilestones: number[]
 }
 
 export type DayStatus = 'on-time' | 'missed' | 'day-off' | 'holiday' | 'weekend' | 'future' | 'no-record'

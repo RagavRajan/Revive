@@ -6,6 +6,9 @@ import { DEFAULT_DEADLINE_MINUTES } from '../utils/constants'
 const DEFAULT_SETTINGS: AppSettings = {
   registeredBarcode: null,
   deadlineMinutes: DEFAULT_DEADLINE_MINUTES,
+  bestStreak: 0,
+  reminderMinutes: null,
+  shownMilestones: [],
 }
 
 function settingsDoc() {
@@ -17,7 +20,7 @@ function settingsDoc() {
 export async function getSettings(): Promise<AppSettings> {
   const snap = await getDoc(settingsDoc())
   if (snap.exists()) {
-    return snap.data() as AppSettings
+    return { ...DEFAULT_SETTINGS, ...snap.data() } as AppSettings
   }
   return DEFAULT_SETTINGS
 }

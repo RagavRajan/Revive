@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { getAllRecords } from '../db/attendance'
-import type { DayRecord } from '../types'
+import type { AppSettings, DayRecord } from '../types'
 import { toDateKey, isWeekend } from '../utils/date'
 import { HOLIDAYS_2026 } from '../utils/constants'
 
@@ -13,7 +13,6 @@ export function calculateStreak(records: DayRecord[]): number {
   let streak = 0
   const d = new Date()
 
-  // If today has no check-in yet, start checking from yesterday
   const todayKey = toDateKey(d)
   const todayRecord = recordMap.get(todayKey)
   const todayHasCheckIn = todayRecord?.events.some(e => e.type === 'check-in') ?? false
@@ -26,13 +25,11 @@ export function calculateStreak(records: DayRecord[]): number {
     const key = toDateKey(d)
     const record = recordMap.get(key)
 
-    // Skip weekends, holidays, and manual day-offs
     if (isWeekend(key) || HOLIDAYS_2026[key] || record?.isDayOff) {
       d.setDate(d.getDate() - 1)
       continue
     }
 
-    // Working day — check for check-in
     const hasCheckIn = record?.events.some(e => e.type === 'check-in') ?? false
 
     if (hasCheckIn) {
@@ -46,19 +43,31 @@ export function calculateStreak(records: DayRecord[]): number {
   return streak
 }
 
-export function useStreak() {
+interface UseStreakOptions {
+  settings: AppSettings | null
+  updateSettings: (updates: Partial<AppSettings>) => Promise<void>
+}
+
+export function useStreak({ settings, updateSettings }: UseStreakOptions) {
   const [streak, setStreak] = useState(0)
   const [loading, setLoading] = useState(true)
 
   const refresh = useCallback(async () => {
     const records = await getAllRecords()
-    setStreak(calculateStreak(records))
+    const computed = calculateStreak(records)
+    setStreak(computed)
     setLoading(false)
-  }, [])
+
+    if (settings && computed > (settings.bestStreak ?? 0)) {
+      updateSettings({ bestStreak: computed })
+    }
+  }, [settings, updateSettings])
 
   useEffect(() => {
     refresh()
   }, [refresh])
 
-  return { streak, loading, refresh }
+  const bestStreak = settings?.bestStreak ?? 0
+
+  return { streak, bestStreak, loading, refresh }
 }

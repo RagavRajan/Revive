@@ -5,6 +5,7 @@ import { onAuthChange, signOut } from './firebase/auth'
 import { useSettings } from './hooks/useSettings'
 import { useAttendance } from './hooks/useAttendance'
 import { useMidnightAutoClose } from './hooks/useMidnightAutoClose'
+import { useReminder } from './hooks/useReminder'
 import { preloadSounds } from './utils/sound'
 import { Layout } from './components/Layout'
 import { LoginScreen } from './components/Auth/LoginScreen'
@@ -13,6 +14,7 @@ import { SharedCalendarView } from './components/Calendar/SharedCalendarView'
 import { ScannerView } from './components/Scanner/ScannerView'
 import { BarcodeRegistration } from './components/Scanner/BarcodeRegistration'
 import { SettingsPage } from './components/Settings/SettingsPage'
+import { ReminderBanner } from './components/ReminderBanner'
 
 function getSharedUid(): string | null {
   const hash = window.location.hash
@@ -24,6 +26,7 @@ function AuthenticatedApp({ user }: { user: User }) {
   const [activeView, setActiveView] = useState<ActiveView>('calendar')
   const { settings, loading: settingsLoading, updateSettings } = useSettings()
   const { checkedIn, recordScan, refresh: refreshAttendance } = useAttendance()
+  const { bannerVisible, dismissBanner } = useReminder(settings, checkedIn)
 
   useEffect(() => { preloadSounds() }, [])
 
@@ -62,8 +65,9 @@ function AuthenticatedApp({ user }: { user: User }) {
 
   return (
     <Layout activeView={activeView} onNavigate={setActiveView} onSignOut={signOut} userEmail={user.email} onShare={handleShare} checkedIn={checkedIn}>
+      {bannerVisible && <ReminderBanner onDismiss={dismissBanner} />}
       {activeView === 'calendar' && (
-        <CalendarGrid settings={settings} />
+        <CalendarGrid settings={settings} updateSettings={updateSettings} />
       )}
       {activeView === 'scanner' && (
         <ScannerView
@@ -88,7 +92,6 @@ function App() {
   const [sharedUid] = useState(getSharedUid)
 
   useEffect(() => {
-    // If viewing a shared calendar, no auth needed
     if (sharedUid) {
       setAuthLoading(false)
       return
@@ -108,7 +111,6 @@ function App() {
     )
   }
 
-  // Shared view — no auth required
   if (sharedUid) {
     return <SharedCalendarView uid={sharedUid} />
   }

@@ -3,6 +3,8 @@ export const DB_VERSION = 1
 export const DEFAULT_DEADLINE_MINUTES = 540 // 9:00 AM
 export const SETTINGS_KEY = 'app-settings'
 
+export const STREAK_MILESTONES = [7, 14, 30, 50, 100, 200, 365] as const
+
 export const HOLIDAYS_2026: Record<string, string> = {
   '2026-01-01': 'New Year',
   '2026-01-15': 'Sankranthi/Pongal',

@@ -3,6 +3,7 @@ import { collection, doc, getDoc, getDocs, query, where, orderBy } from 'firebas
 import { db } from '../../firebase/config'
 import type { DayRecord, DayStatus, AppSettings } from '../../types'
 import { getMonthRange, getDaysInMonth, getFirstDayOfWeek, toDateKey, isFutureDate, minutesSinceMidnight, isWeekend, getRemainingWorkingDays, getTotalWorkingDays } from '../../utils/date'
+import { getMonthlyStats } from '../../utils/monthlyStats'
 import { HOLIDAYS_2026 } from '../../utils/constants'
 import { MonthNavigator } from './MonthNavigator'
 import { CalendarDay } from './CalendarDay'
@@ -168,6 +169,11 @@ export function SharedCalendarView({ uid }: Props) {
           <span className="streak-icon">&#128293;</span>
           <span className="streak-count">{streak}</span>
           <span className="streak-label">day streak</span>
+          {(settings?.bestStreak ?? 0) > 0 && (
+            <span className="streak-best">
+              {streak > 0 && streak >= (settings?.bestStreak ?? 0) ? '(personal best!)' : `(best: ${settings?.bestStreak})`}
+            </span>
+          )}
         </div>
 
         <MonthNavigator year={year} month={month} onPrev={prevMonth} onNext={nextMonth} />
@@ -179,6 +185,15 @@ export function SharedCalendarView({ uid }: Props) {
             {cells}
           </div>
         )}
+        {(() => {
+          const monthly = getMonthlyStats(year, month, records, HOLIDAYS_2026)
+          return monthly.totalWorking > 0 ? (
+            <div className="monthly-stats">
+              {monthly.attended}/{monthly.totalWorking} days — {monthly.percentage}%
+            </div>
+          ) : null
+        })()}
+
         <div className="calendar-footer">
           <div className="progress-bar-container">
             <div className="progress-bar-track">
@@ -297,6 +312,17 @@ export function SharedCalendarView({ uid }: Props) {
         .streak-label {
           color: var(--color-text-muted);
           font-size: 1rem;
+          font-weight: 500;
+        }
+        .streak-best {
+          color: var(--color-text-muted);
+          font-size: 0.8rem;
+        }
+        .monthly-stats {
+          text-align: center;
+          color: var(--color-text-muted);
+          font-size: 0.9rem;
+          margin-top: 12px;
           font-weight: 500;
         }
         .calendar-grid {
