@@ -81,6 +81,11 @@ export function DayDetail({ dateKey, onClose, onUpdate, readOnly, uid }: Props) 
 
         {sortedEvents.length > 0 ? (
           <div className="day-detail-sessions">
+            <div className="session-header">
+              <span className="session-col-num">#</span>
+              <span className="session-col"><span className="session-dot dot-in" /> Check-In</span>
+              <span className="session-col"><span className="session-dot dot-out" /> Check-Out</span>
+            </div>
             {(() => {
               const sessions: { checkIn: typeof sortedEvents[0]; checkOut?: typeof sortedEvents[0] }[] = []
               for (let i = 0; i < sortedEvents.length; i++) {
@@ -92,20 +97,14 @@ export function DayDetail({ dateKey, onClose, onUpdate, readOnly, uid }: Props) 
               }
               return sessions.map((s, i) => (
                 <div key={s.checkIn.id} className="session-row">
-                  <div className="session-in">
-                    <span className="session-type-label">#{i + 1} Check-In</span>
-                    <span className="session-dot dot-in" />
-                    {formatTime(s.checkIn.timestamp)}
-                  </div>
-                  <span className="session-arrow">&rarr;</span>
-                  <div className="session-out">
-                    <span className="session-type-label">Check-Out</span>
-                    <span className="session-dot dot-out" />
+                  <span className="session-col-num">{i + 1}</span>
+                  <span className="session-col">{formatTime(s.checkIn.timestamp)}</span>
+                  <span className="session-col">
                     {s.checkOut
                       ? <>{formatTime(s.checkOut.timestamp)}{s.checkOut.autoClose && ' (auto)'}</>
                       : <span className="session-active">Active</span>
                     }
-                  </div>
+                  </span>
                 </div>
               ))
             })()}
@@ -199,38 +198,44 @@ export function DayDetail({ dateKey, onClose, onUpdate, readOnly, uid }: Props) 
           border-radius: var(--radius);
           overflow: hidden;
         }
-        .session-row {
+        .session-header {
+          display: flex;
+          padding: 8px 12px;
+          border-bottom: 1px solid var(--color-border);
+          font-size: 0.75rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          color: var(--color-text-muted);
+        }
+        .session-header .session-col {
           display: flex;
           align-items: center;
-          justify-content: space-between;
-          gap: 12px;
+          gap: 6px;
+        }
+        .session-row {
+          display: flex;
           padding: 10px 12px;
           font-size: 0.9rem;
+          font-weight: 500;
         }
         .session-row + .session-row {
           border-top: 1px solid var(--color-border);
         }
-        .session-in, .session-out {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          font-weight: 500;
-        }
-        .session-type-label {
-          font-size: 0.7rem;
-          color: var(--color-text-muted);
-          text-transform: uppercase;
-          letter-spacing: 0.3px;
-        }
-        .session-arrow {
-          color: var(--color-text-muted);
+        .session-col-num {
+          width: 30px;
           flex-shrink: 0;
+          color: var(--color-text-muted);
+          font-size: 0.8rem;
+        }
+        .session-col {
+          flex: 1;
         }
         .session-dot {
           width: 8px;
           height: 8px;
           border-radius: 50%;
-          flex-shrink: 0;
+          display: inline-block;
         }
         .dot-in { background: var(--color-success); }
         .dot-out { background: var(--color-danger); }
