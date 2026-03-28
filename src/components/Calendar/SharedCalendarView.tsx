@@ -164,6 +164,12 @@ export function SharedCalendarView({ uid }: Props) {
       {error && <p className="shared-error">{error}</p>}
 
       <div className="calendar">
+        <div className="calendar-streak">
+          <span className="streak-icon">&#128293;</span>
+          <span className="streak-count">{streak}</span>
+          <span className="streak-label">day streak</span>
+        </div>
+
         <MonthNavigator year={year} month={month} onPrev={prevMonth} onNext={nextMonth} />
         {loading ? (
           <p style={{ textAlign: 'center', color: 'var(--color-text-muted)' }}>Loading...</p>
@@ -187,10 +193,6 @@ export function SharedCalendarView({ uid }: Props) {
             <div className="progress-bar-label">
               <span style={{ color: `hsl(${Math.round((totalDays > 0 ? (remainingDays / totalDays) : 0) * 100 * 1.2)}, 70%, 50%)` }}>{remainingDays}</span>/{totalDays} working days remaining
             </div>
-          </div>
-          <div className="calendar-streak">
-            <span className="streak-icon">&#128293;</span>
-            <span className="streak-count">{streak}</span> day streak
           </div>
         </div>
       </div>
@@ -277,19 +279,25 @@ export function SharedCalendarView({ uid }: Props) {
         }
         .calendar-streak {
           text-align: center;
-          color: var(--color-text-muted);
-          font-size: 0.85rem;
           display: flex;
           align-items: center;
-          gap: 4px;
+          justify-content: center;
+          gap: 8px;
+          margin-bottom: 20px;
         }
         .streak-icon {
-          font-size: 1rem;
+          font-size: 2rem;
         }
         .streak-count {
           color: #ff9800;
-          font-weight: 700;
-          font-size: 1.1rem;
+          font-weight: 800;
+          font-size: 2.5rem;
+          line-height: 1;
+        }
+        .streak-label {
+          color: var(--color-text-muted);
+          font-size: 1rem;
+          font-weight: 500;
         }
         .calendar-grid {
           display: grid;
