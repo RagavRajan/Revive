@@ -80,19 +80,34 @@ export function DayDetail({ dateKey, onClose, onUpdate, readOnly, uid }: Props) 
         )}
 
         {sortedEvents.length > 0 ? (
-          <div className="day-detail-timeline">
-            {sortedEvents.map(event => (
-              <div key={event.id} className="timeline-event">
-                <div className={`timeline-dot ${event.type === 'check-in' ? 'dot-in' : 'dot-out'}`} />
-                <div className="timeline-content">
-                  <span className="timeline-type">
-                    {event.type === 'check-in' ? 'Check In' : 'Check Out'}
-                    {event.autoClose && ' (auto)'}
-                  </span>
-                  <span className="timeline-time">{formatTime(event.timestamp)}</span>
+          <div className="day-detail-sessions">
+            {(() => {
+              const sessions: { checkIn: typeof sortedEvents[0]; checkOut?: typeof sortedEvents[0] }[] = []
+              for (let i = 0; i < sortedEvents.length; i++) {
+                if (sortedEvents[i].type === 'check-in') {
+                  const out = sortedEvents.find((e, j) => j > i && e.type === 'check-out')
+                  sessions.push({ checkIn: sortedEvents[i], checkOut: out })
+                  if (out) i = sortedEvents.indexOf(out)
+                }
+              }
+              return sessions.map((s, i) => (
+                <div key={s.checkIn.id} className="session-row">
+                  <span className="session-num">#{i + 1}</span>
+                  <div className="session-in">
+                    <span className="session-dot dot-in" />
+                    {formatTime(s.checkIn.timestamp)}
+                  </div>
+                  <span className="session-arrow">&rarr;</span>
+                  <div className="session-out">
+                    <span className="session-dot dot-out" />
+                    {s.checkOut
+                      ? <>{formatTime(s.checkOut.timestamp)}{s.checkOut.autoClose && ' (auto)'}</>
+                      : <span className="session-active">Active</span>
+                    }
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            })()}
           </div>
         ) : (
           <p className="day-detail-empty">No events recorded</p>
@@ -178,40 +193,46 @@ export function DayDetail({ dateKey, onClose, onUpdate, readOnly, uid }: Props) 
           background: var(--color-day-off);
           color: white;
         }
-        .day-detail-timeline {
+        .day-detail-sessions {
           display: flex;
           flex-direction: column;
-          gap: 12px;
+          gap: 8px;
         }
-        .timeline-event {
+        .session-row {
           display: flex;
           align-items: center;
-          gap: 12px;
+          gap: 10px;
+          background: var(--color-bg);
+          padding: 10px 12px;
+          border-radius: var(--radius);
+          font-size: 0.9rem;
         }
-        .timeline-dot {
-          width: 12px;
-          height: 12px;
+        .session-num {
+          color: var(--color-text-muted);
+          font-size: 0.75rem;
+          font-weight: 600;
+          min-width: 20px;
+        }
+        .session-in, .session-out {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-weight: 500;
+        }
+        .session-arrow {
+          color: var(--color-text-muted);
+        }
+        .session-dot {
+          width: 8px;
+          height: 8px;
           border-radius: 50%;
           flex-shrink: 0;
         }
-        .dot-in {
-          background: var(--color-success);
-        }
-        .dot-out {
-          background: var(--color-danger);
-        }
-        .timeline-content {
-          display: flex;
-          justify-content: space-between;
-          flex: 1;
-        }
-        .timeline-type {
-          font-weight: 500;
-          font-size: 0.9rem;
-        }
-        .timeline-time {
-          color: var(--color-text-muted);
-          font-size: 0.9rem;
+        .dot-in { background: var(--color-success); }
+        .dot-out { background: var(--color-danger); }
+        .session-active {
+          color: var(--color-success);
+          font-style: italic;
         }
         .day-detail-hours {
           text-align: center;
