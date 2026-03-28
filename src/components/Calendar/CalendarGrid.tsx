@@ -21,6 +21,9 @@ export function CalendarGrid({ settings }: Props) {
   const currentYear = new Date().getFullYear()
   const remainingDays = useMemo(() => getRemainingWorkingDays(HOLIDAYS_2026), [])
   const totalDays = useMemo(() => getTotalWorkingDays(currentYear, HOLIDAYS_2026), [currentYear])
+  const remainingPct = totalDays > 0 ? (remainingDays / totalDays) * 100 : 0
+  // Green at 100% → yellow at 50% → red at 0%
+  const barHue = Math.round(remainingPct * 1.2) // 120 (green) → 0 (red)
 
   const daysInMonth = getDaysInMonth(year, month)
   const firstDay = getFirstDayOfWeek(year, month)
@@ -78,8 +81,19 @@ export function CalendarGrid({ settings }: Props) {
       </div>
 
       <div className="calendar-footer">
-        <div className="calendar-remaining">
-          <span>{remainingDays}/{totalDays}</span> working days remaining in {currentYear}
+        <div className="progress-bar-container">
+          <div className="progress-bar-track">
+            <div
+              className="progress-bar-fill"
+              style={{
+                width: `${remainingPct}%`,
+                background: `hsl(${barHue}, 70%, 50%)`,
+              }}
+            />
+          </div>
+          <div className="progress-bar-label">
+            <span style={{ color: `hsl(${barHue}, 70%, 50%)` }}>{remainingDays}</span>/{totalDays} working days remaining
+          </div>
         </div>
         <div className="calendar-streak">
           <span className="streak-icon">&#128293;</span>
@@ -109,15 +123,30 @@ export function CalendarGrid({ settings }: Props) {
           align-items: center;
           gap: 6px;
         }
-        .calendar-remaining {
+        .progress-bar-container {
+          width: 100%;
+        }
+        .progress-bar-track {
+          width: 100%;
+          height: 8px;
+          background: var(--color-surface);
+          border-radius: 4px;
+          overflow: hidden;
+        }
+        .progress-bar-fill {
+          height: 100%;
+          border-radius: 4px;
+          transition: width 0.5s ease, background 0.5s ease;
+        }
+        .progress-bar-label {
           text-align: center;
           color: var(--color-text-muted);
-          font-size: 0.85rem;
+          font-size: 0.8rem;
+          margin-top: 6px;
         }
-        .calendar-remaining span {
-          color: var(--color-primary);
+        .progress-bar-label span {
           font-weight: 700;
-          font-size: 1.1rem;
+          font-size: 0.95rem;
         }
         .calendar-streak {
           text-align: center;
