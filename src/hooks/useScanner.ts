@@ -6,6 +6,11 @@ interface UseScannerOptions {
   elementId: string
 }
 
+const scanConfig = {
+  fps: 10,
+  qrbox: { width: 280, height: 140 },
+}
+
 export function useScanner({ onScan, elementId }: UseScannerOptions) {
   const scannerRef = useRef<Html5Qrcode | null>(null)
   const onScanRef = useRef(onScan)
@@ -23,34 +28,38 @@ export function useScanner({ onScan, elementId }: UseScannerOptions) {
       const scanner = new Html5Qrcode(elementId)
       scannerRef.current = scanner
 
-      // Use back camera on mobile (better autofocus), front on desktop
+      const successCb = (decodedText: string) => { onScanRef.current(decodedText) }
+      const errorCb = () => {}
+
       const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
-      const cameraConfig: MediaTrackConstraints = {
-        facingMode: isMobile ? 'environment' : 'user',
-        // @ts-expect-error -- advanced constraints not in TS types but supported by browsers
-        advanced: [{ focusMode: 'continuous' }],
+      const preferredFacing = isMobile ? 'environment' : 'user'
+
+      // Try preferred camera first, fall back to any available camera
+      try {
+        await scanner.start(
+          { facingMode: preferredFacing },
+          scanConfig,
+          successCb,
+          errorCb,
+        )
+      } catch {
+        // Preferred camera failed — try listing cameras and using the first one
+        const cameras = await Html5Qrcode.getCameras()
+        if (cameras.length === 0) {
+          setError('No camera found')
+          scannerRef.current = null
+          return
+        }
+        await scanner.start(cameras[0].id, scanConfig, successCb, errorCb)
       }
 
-      await scanner.start(
-        cameraConfig,
-        {
-          fps: 10,
-          qrbox: { width: 280, height: 140 },
-          aspectRatio: isMobile ? 1.0 : undefined,
-        },
-        (decodedText) => {
-          onScanRef.current(decodedText)
-        },
-        () => {}
-      )
-
-      // Try to enable continuous autofocus on the active video track
+      // Try to enable continuous autofocus
       try {
-        const videoElement = document.querySelector(`#${elementId} video`) as HTMLVideoElement | null
-        if (videoElement?.srcObject) {
-          const track = (videoElement.srcObject as MediaStream).getVideoTracks()[0]
-          const capabilities = track.getCapabilities?.()
-          if (capabilities && 'focusMode' in capabilities) {
+        const videoEl = document.querySelector(`#${elementId} video`) as HTMLVideoElement | null
+        if (videoEl?.srcObject) {
+          const track = (videoEl.srcObject as MediaStream).getVideoTracks()[0]
+          const caps = track.getCapabilities?.()
+          if (caps && 'focusMode' in caps) {
             await track.applyConstraints({
               // @ts-expect-error -- focusMode not in TS types
               advanced: [{ focusMode: 'continuous' }],
@@ -58,7 +67,7 @@ export function useScanner({ onScan, elementId }: UseScannerOptions) {
           }
         }
       } catch {
-        // autofocus constraint not supported — that's ok
+        // not supported — fine
       }
 
       setIsRunning(true)
