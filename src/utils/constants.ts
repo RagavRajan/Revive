@@ -19,5 +19,21 @@ export const HOLIDAYS_2026: Record<string, string> = {
   '2026-10-02': 'Gandhi Jayanthi',
   '2026-10-20': 'Dusshera/Vijayadashami',
   '2026-11-08': 'Deepavali/Diwali',
+  // Summer Break (June 29 – July 3)
+  '2026-06-29': 'Summer Break',
+  '2026-06-30': 'Summer Break',
+  '2026-07-01': 'Summer Break',
+  '2026-07-02': 'Summer Break',
+  '2026-07-03': 'Summer Break',
+  // Winter Break (Dec 21 – Jan 1)
+  '2026-12-21': 'Winter Break',
+  '2026-12-22': 'Winter Break',
+  '2026-12-23': 'Winter Break',
+  '2026-12-24': 'Winter Break',
   '2026-12-25': 'Christmas',
+  '2026-12-28': 'Winter Break',
+  '2026-12-29': 'Winter Break',
+  '2026-12-30': 'Winter Break',
+  '2026-12-31': 'Winter Break',
+  '2027-01-01': 'Winter Break',
 }
