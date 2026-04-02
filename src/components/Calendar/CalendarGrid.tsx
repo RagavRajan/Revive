@@ -3,7 +3,7 @@ import type { AppSettings } from '../../types'
 import { useCalendar } from '../../hooks/useCalendar'
 import { useStreak } from '../../hooks/useStreak'
 import { useMilestones } from '../../hooks/useMilestones'
-import { getDaysInMonth, getFirstDayOfWeek, toDateKey, getRemainingWorkingDays, getTotalWorkingDays } from '../../utils/date'
+import { getDaysInMonth, getFirstDayOfWeek, toDateKey, getRemainingWorkingDays, getTotalWorkingDays, isFutureDate } from '../../utils/date'
 import { getMonthlyStats } from '../../utils/monthlyStats'
 import { HOLIDAYS_2026 } from '../../utils/constants'
 import { MonthNavigator } from './MonthNavigator'
@@ -52,6 +52,11 @@ export function CalendarGrid({ settings, updateSettings, statsOpen, onStatsClose
       <CalendarDay key={dateKey} dateKey={dateKey} dayNumber={day} status={getDayStatus(dateKey)} onClick={handleDayClick} />
     )
   }
+
+  const allBreakDates = Object.keys(HOLIDAYS_2026)
+  const totalBreaks = allBreakDates.length
+  const usedBreaks = allBreakDates.filter(d => !isFutureDate(d)).length
+  const breakPct = totalBreaks > 0 ? (usedBreaks / totalBreaks) * 100 : 0
 
   const streakIsBest = streak > 0 && streak >= bestStreak
 
@@ -124,6 +129,16 @@ export function CalendarGrid({ settings, updateSettings, statsOpen, onStatsClose
           </div>
           <div className="progress-bar-label">
             <span style={{ color: `hsl(${barHue}, 70%, 50%)` }}>{remainingDays}</span>/{totalDays} remaining
+          </div>
+        </div>
+
+        <div className="stats-section">
+          <div className="stats-section-title">Break Days</div>
+          <div className="progress-bar-track">
+            <div className="progress-bar-fill" style={{ width: `${breakPct}%`, background: 'var(--color-primary)' }} />
+          </div>
+          <div className="progress-bar-label">
+            <span style={{ color: 'var(--color-primary)' }}>{usedBreaks}</span>/{totalBreaks} used
           </div>
         </div>
 
