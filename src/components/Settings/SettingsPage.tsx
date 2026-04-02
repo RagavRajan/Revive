@@ -35,7 +35,6 @@ export function SettingsPage({ settings, onUpdate }: Props) {
         </div>
         <BarcodeRegistration
           onRegistered={handleRegistered}
-          currentBarcode={settings.registeredBarcode}
         />
         <style>{`
           .settings-back { padding: 16px 24px 0; }
