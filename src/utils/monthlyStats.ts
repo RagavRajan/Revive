@@ -14,7 +14,6 @@ export function getMonthlyStats(
   for (let day = 1; day <= days; day++) {
     const dateKey = toDateKey(new Date(year, month, day))
 
-    if (isFutureDate(dateKey)) break
     if (isWeekend(dateKey)) continue
     if (holidays[dateKey]) continue
 
@@ -22,8 +21,11 @@ export function getMonthlyStats(
     if (record?.isDayOff) continue
 
     totalWorking++
-    const hasCheckIn = record?.events.some(e => e.type === 'check-in') ?? false
-    if (hasCheckIn) attended++
+
+    if (!isFutureDate(dateKey)) {
+      const hasCheckIn = record?.events.some(e => e.type === 'check-in') ?? false
+      if (hasCheckIn) attended++
+    }
   }
 
   const percentage = totalWorking > 0 ? Math.round((attended / totalWorking) * 100) : 0
