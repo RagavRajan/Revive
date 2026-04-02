@@ -69,8 +69,8 @@ export function CalendarGrid({ settings, updateSettings, statsOpen, onStatsClose
 
   const holidayDates = Object.keys(HOLIDAYS_2026)
   const totalBreaks = weekendsInYear.total + holidayDates.length + daysOff
-  const usedBreaks = weekendsInYear.past + holidayDates.filter(d => !isFutureDate(d)).length + daysOff
-  const breakPct = totalBreaks > 0 ? (usedBreaks / totalBreaks) * 100 : 0
+  const remainingBreaks = totalBreaks - (weekendsInYear.past + holidayDates.filter(d => !isFutureDate(d)).length + daysOff)
+  const breakPct = totalBreaks > 0 ? (remainingBreaks / totalBreaks) * 100 : 0
 
   const streakIsBest = streak > 0 && streak >= bestStreak
 
@@ -152,7 +152,7 @@ export function CalendarGrid({ settings, updateSettings, statsOpen, onStatsClose
             <div className="progress-bar-fill" style={{ width: `${breakPct}%`, background: 'var(--color-primary)' }} />
           </div>
           <div className="progress-bar-label">
-            <span style={{ color: 'var(--color-primary)' }}>{usedBreaks}</span>/{totalBreaks} used
+            <span style={{ color: 'var(--color-primary)' }}>{remainingBreaks}</span>/{totalBreaks} remaining
           </div>
         </div>
 
