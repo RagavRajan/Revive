@@ -11,7 +11,20 @@ interface Props {
 
 const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-function dotColor(status: DayStatus): string {
+function cellBg(status: DayStatus): string {
+  switch (status) {
+    case 'on-time': return 'var(--color-success-bg)'
+    case 'missed': return 'rgba(255, 152, 0, 0.15)'
+    case 'no-record': return 'var(--color-danger-bg)'
+    case 'holiday': return 'rgba(108, 99, 255, 0.15)'
+    case 'weekend': return 'rgba(85, 85, 112, 0.1)'
+    case 'day-off': return 'rgba(85, 85, 112, 0.1)'
+    case 'future': return 'transparent'
+    default: return 'transparent'
+  }
+}
+
+function cellColor(status: DayStatus): string {
   switch (status) {
     case 'on-time': return 'var(--color-success)'
     case 'missed': return '#ff9800'
@@ -19,8 +32,8 @@ function dotColor(status: DayStatus): string {
     case 'holiday': return 'var(--color-primary)'
     case 'weekend': return 'var(--color-day-off)'
     case 'day-off': return 'var(--color-day-off)'
-    case 'future': return 'transparent'
-    default: return 'transparent'
+    case 'future': return 'var(--color-text-muted)'
+    default: return 'var(--color-text-muted)'
   }
 }
 
@@ -90,9 +103,8 @@ export function WidgetCalendarView({ uid }: Props) {
     const status = getDayStatus(dateKey)
     const today = isToday(dateKey)
     cells.push(
-      <div key={dateKey} className={`w-cell ${today ? 'w-today' : ''}`}>
+      <div key={dateKey} className={`w-cell ${today ? 'w-today' : ''}`} style={{ background: cellBg(status), color: cellColor(status) }}>
         <span className="w-num">{day}</span>
-        <span className="w-dot" style={{ background: dotColor(status) }} />
       </div>
     )
   }
@@ -165,12 +177,10 @@ export function WidgetCalendarView({ uid }: Props) {
           padding: 2px 0 4px;
         }
         .w-cell {
+          aspect-ratio: 1;
           display: flex;
-          flex-direction: column;
           align-items: center;
           justify-content: center;
-          padding: 3px 0;
-          gap: 2px;
           border-radius: 4px;
         }
         .w-today {
@@ -179,15 +189,8 @@ export function WidgetCalendarView({ uid }: Props) {
         }
         .w-num {
           font-size: 0.65rem;
-          font-weight: 500;
-          color: var(--color-text);
+          font-weight: 600;
           line-height: 1;
-        }
-        .w-dot {
-          width: 6px;
-          height: 6px;
-          border-radius: 50%;
-          flex-shrink: 0;
         }
       `}</style>
     </div>
