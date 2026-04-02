@@ -43,25 +43,6 @@ function AuthenticatedApp({ user }: { user: User }) {
   }, [refreshAttendance])
   useMidnightAutoClose(handleAutoClose)
 
-  const handleShare = () => {
-    const base = window.location.origin + window.location.pathname
-    const shareUrl = `${base}#/shared/${user.uid}`
-    navigator.clipboard.writeText(shareUrl).then(() => {
-      alert('Share link copied to clipboard!')
-    }).catch(() => {
-      prompt('Copy this share link:', shareUrl)
-    })
-  }
-
-  const handleWidget = () => {
-    const base = window.location.origin + window.location.pathname
-    const widgetUrl = `${base}#/widget/${user.uid}`
-    navigator.clipboard.writeText(widgetUrl).then(() => {
-      alert('Widget link copied! Open it in Chrome and use "Add to Home Screen" to create a widget.')
-    }).catch(() => {
-      prompt('Copy this widget link:', widgetUrl)
-    })
-  }
 
   if (settingsLoading) {
     return (
@@ -82,10 +63,10 @@ function AuthenticatedApp({ user }: { user: User }) {
   }
 
   return (
-    <Layout activeView={activeView} onNavigate={setActiveView} onSignOut={signOut} userEmail={user.email} onShare={handleShare} onWidget={handleWidget} onStats={() => setStatsOpen(true)} checkedIn={checkedIn}>
+    <Layout activeView={activeView} onNavigate={setActiveView} onSignOut={signOut} userEmail={user.email} onStats={() => setStatsOpen(true)} checkedIn={checkedIn}>
       {bannerVisible && <ReminderBanner onDismiss={dismissBanner} />}
       {activeView === 'calendar' && (
-        <CalendarGrid settings={settings} updateSettings={updateSettings} statsOpen={statsOpen} onStatsClose={() => setStatsOpen(false)} />
+        <CalendarGrid settings={settings} updateSettings={updateSettings} statsOpen={statsOpen} onStatsClose={() => setStatsOpen(false)} uid={user.uid} />
       )}
       {activeView === 'scanner' && (
         <ScannerView

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import type { AppSettings } from '../../types'
 import { useCalendar } from '../../hooks/useCalendar'
 import { useStreak } from '../../hooks/useStreak'
@@ -16,11 +16,12 @@ interface Props {
   updateSettings: (updates: Partial<AppSettings>) => Promise<void>
   statsOpen: boolean
   onStatsClose: () => void
+  uid: string
 }
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
-export function CalendarGrid({ settings, updateSettings, statsOpen, onStatsClose }: Props) {
+export function CalendarGrid({ settings, updateSettings, statsOpen, onStatsClose, uid }: Props) {
   const { year, month, records, prevMonth, nextMonth, getDayStatus, refresh } = useCalendar(settings)
   const { streak, bestStreak, refresh: refreshStreak } = useStreak({ settings, updateSettings })
   const { activeMilestone, dismissMilestone } = useMilestones({ streak, settings, updateSettings })
@@ -53,6 +54,18 @@ export function CalendarGrid({ settings, updateSettings, statsOpen, onStatsClose
   }
 
   const streakIsBest = streak > 0 && streak >= bestStreak
+
+  const base = `${window.location.origin}${window.location.pathname}`
+  const shareUrl = `${base}#/shared/${uid}`
+  const widgetUrl = `${base}#/widget/${uid}`
+
+  const [copied, setCopied] = useState<'share' | 'widget' | null>(null)
+  const copyLink = useCallback((url: string, type: 'share' | 'widget') => {
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(type)
+      setTimeout(() => setCopied(null), 2000)
+    })
+  }, [])
 
   return (
     <div className="calendar">
@@ -111,6 +124,26 @@ export function CalendarGrid({ settings, updateSettings, statsOpen, onStatsClose
           </div>
           <div className="progress-bar-label">
             <span style={{ color: `hsl(${barHue}, 70%, 50%)` }}>{remainingDays}</span>/{totalDays} remaining
+          </div>
+        </div>
+
+        <div className="stats-section">
+          <div className="stats-section-title">Share Link</div>
+          <div className="stats-link-row">
+            <code className="stats-link-url">{shareUrl}</code>
+            <button className="stats-link-copy" onClick={() => copyLink(shareUrl, 'share')}>
+              {copied === 'share' ? 'Copied!' : 'Copy'}
+            </button>
+          </div>
+        </div>
+
+        <div className="stats-section">
+          <div className="stats-section-title">Widget Link</div>
+          <div className="stats-link-row">
+            <code className="stats-link-url">{widgetUrl}</code>
+            <button className="stats-link-copy" onClick={() => copyLink(widgetUrl, 'widget')}>
+              {copied === 'widget' ? 'Copied!' : 'Copy'}
+            </button>
           </div>
         </div>
       </div>
@@ -216,6 +249,35 @@ export function CalendarGrid({ settings, updateSettings, statsOpen, onStatsClose
         .progress-bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease, background 0.5s ease; }
         .progress-bar-label { text-align: center; color: var(--color-text-muted); font-size: 0.8rem; margin-top: 6px; }
         .progress-bar-label span { font-weight: 700; font-size: 0.95rem; }
+        .stats-link-row {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .stats-link-url {
+          flex: 1;
+          font-size: 0.7rem;
+          background: var(--color-surface-hover);
+          padding: 6px 8px;
+          border-radius: 4px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          color: var(--color-text-muted);
+        }
+        .stats-link-copy {
+          font-size: 0.75rem;
+          font-weight: 600;
+          color: var(--color-primary);
+          padding: 6px 10px;
+          border: 1px solid var(--color-primary);
+          border-radius: var(--radius);
+          white-space: nowrap;
+          transition: background var(--transition);
+        }
+        .stats-link-copy:hover {
+          background: rgba(108, 99, 255, 0.15);
+        }
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
         .calendar-header {
           text-align: center; font-size: 0.85rem; font-weight: 600;

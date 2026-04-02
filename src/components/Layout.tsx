@@ -4,15 +4,13 @@ interface Props {
   activeView: ActiveView
   onNavigate: (view: ActiveView) => void
   onSignOut: () => Promise<void>
-  onShare: () => void
-  onWidget: () => void
   onStats?: () => void
   userEmail?: string | null
   checkedIn: boolean
   children: React.ReactNode
 }
 
-export function Layout({ activeView, onNavigate, onSignOut, onShare, onWidget, onStats, userEmail, checkedIn, children }: Props) {
+export function Layout({ activeView, onNavigate, onSignOut, onStats, userEmail, checkedIn, children }: Props) {
   return (
     <div className="layout">
       <header className="layout-header">
@@ -20,8 +18,6 @@ export function Layout({ activeView, onNavigate, onSignOut, onShare, onWidget, o
         <div className="layout-user">
           {userEmail && <span className="layout-email">{userEmail}</span>}
           {onStats && <button className="layout-stats" onClick={onStats}>Stats</button>}
-          <button className="layout-share" onClick={onShare}>Share</button>
-          <button className="layout-widget" onClick={onWidget}>Widget</button>
           <button className="layout-signout" onClick={() => {
             if (window.confirm('Are you sure you want to sign out?')) onSignOut()
           }}>Sign Out</button>
@@ -93,28 +89,6 @@ export function Layout({ activeView, onNavigate, onSignOut, onShare, onWidget, o
           transition: background var(--transition);
         }
         .layout-stats:hover {
-          background: var(--color-surface-hover);
-        }
-        .layout-share {
-          font-size: 0.8rem;
-          color: var(--color-primary);
-          padding: 6px 12px;
-          border: 1px solid var(--color-primary);
-          border-radius: var(--radius);
-          transition: background var(--transition);
-        }
-        .layout-share:hover {
-          background: rgba(108, 99, 255, 0.15);
-        }
-        .layout-widget {
-          font-size: 0.8rem;
-          color: var(--color-text);
-          padding: 6px 12px;
-          border: 1px solid var(--color-border);
-          border-radius: var(--radius);
-          transition: background var(--transition);
-        }
-        .layout-widget:hover {
           background: var(--color-surface-hover);
         }
         .layout-signout {
