@@ -50,12 +50,14 @@ interface UseStreakOptions {
 
 export function useStreak({ settings, updateSettings }: UseStreakOptions) {
   const [streak, setStreak] = useState(0)
+  const [daysOff, setDaysOff] = useState(0)
   const [loading, setLoading] = useState(true)
 
   const refresh = useCallback(async () => {
     const records = await getAllRecords()
     const computed = calculateStreak(records)
     setStreak(computed)
+    setDaysOff(records.filter(r => r.isDayOff).length)
     setLoading(false)
 
     if (settings && computed > (settings.bestStreak ?? 0)) {
@@ -69,5 +71,5 @@ export function useStreak({ settings, updateSettings }: UseStreakOptions) {
 
   const bestStreak = settings?.bestStreak ?? 0
 
-  return { streak, bestStreak, loading, refresh }
+  return { streak, bestStreak, daysOff, loading, refresh }
 }

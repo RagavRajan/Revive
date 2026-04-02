@@ -23,7 +23,7 @@ const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
 export function CalendarGrid({ settings, updateSettings, statsOpen, onStatsClose, uid }: Props) {
   const { year, month, records, prevMonth, nextMonth, getDayStatus, refresh } = useCalendar(settings)
-  const { streak, bestStreak, refresh: refreshStreak } = useStreak({ settings, updateSettings })
+  const { streak, bestStreak, daysOff, refresh: refreshStreak } = useStreak({ settings, updateSettings })
   const { activeMilestone, dismissMilestone } = useMilestones({ streak, settings, updateSettings })
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
   const currentYear = new Date().getFullYear()
@@ -53,9 +53,23 @@ export function CalendarGrid({ settings, updateSettings, statsOpen, onStatsClose
     )
   }
 
-  const allBreakDates = Object.keys(HOLIDAYS_2026)
-  const totalBreaks = allBreakDates.length
-  const usedBreaks = allBreakDates.filter(d => !isFutureDate(d)).length
+  const weekendsInYear = useMemo(() => {
+    let total = 0, past = 0
+    const d = new Date(currentYear, 0, 1)
+    while (d.getFullYear() === currentYear) {
+      const day = d.getDay()
+      if (day === 0 || day === 6) {
+        total++
+        if (!isFutureDate(toDateKey(d))) past++
+      }
+      d.setDate(d.getDate() + 1)
+    }
+    return { total, past }
+  }, [currentYear])
+
+  const holidayDates = Object.keys(HOLIDAYS_2026)
+  const totalBreaks = weekendsInYear.total + holidayDates.length + daysOff
+  const usedBreaks = weekendsInYear.past + holidayDates.filter(d => !isFutureDate(d)).length + daysOff
   const breakPct = totalBreaks > 0 ? (usedBreaks / totalBreaks) * 100 : 0
 
   const streakIsBest = streak > 0 && streak >= bestStreak
