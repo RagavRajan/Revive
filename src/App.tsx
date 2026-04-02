@@ -11,6 +11,7 @@ import { Layout } from './components/Layout'
 import { LoginScreen } from './components/Auth/LoginScreen'
 import { CalendarGrid } from './components/Calendar/CalendarGrid'
 import { SharedCalendarView } from './components/Calendar/SharedCalendarView'
+import { WidgetCalendarView } from './components/Calendar/WidgetCalendarView'
 import { ScannerView } from './components/Scanner/ScannerView'
 import { BarcodeRegistration } from './components/Scanner/BarcodeRegistration'
 import { SettingsPage } from './components/Settings/SettingsPage'
@@ -19,6 +20,12 @@ import { ReminderBanner } from './components/ReminderBanner'
 function getSharedUid(): string | null {
   const hash = window.location.hash
   const match = hash.match(/^#\/shared\/(.+)$/)
+  return match ? match[1] : null
+}
+
+function getWidgetUid(): string | null {
+  const hash = window.location.hash
+  const match = hash.match(/^#\/widget\/(.+)$/)
   return match ? match[1] : null
 }
 
@@ -46,6 +53,16 @@ function AuthenticatedApp({ user }: { user: User }) {
     })
   }
 
+  const handleWidget = () => {
+    const base = window.location.origin + window.location.pathname
+    const widgetUrl = `${base}#/widget/${user.uid}`
+    navigator.clipboard.writeText(widgetUrl).then(() => {
+      alert('Widget link copied! Open it in Chrome and use "Add to Home Screen" to create a widget.')
+    }).catch(() => {
+      prompt('Copy this widget link:', widgetUrl)
+    })
+  }
+
   if (settingsLoading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--color-text-muted)' }}>
@@ -65,7 +82,7 @@ function AuthenticatedApp({ user }: { user: User }) {
   }
 
   return (
-    <Layout activeView={activeView} onNavigate={setActiveView} onSignOut={signOut} userEmail={user.email} onShare={handleShare} onStats={() => setStatsOpen(true)} checkedIn={checkedIn}>
+    <Layout activeView={activeView} onNavigate={setActiveView} onSignOut={signOut} userEmail={user.email} onShare={handleShare} onWidget={handleWidget} onStats={() => setStatsOpen(true)} checkedIn={checkedIn}>
       {bannerVisible && <ReminderBanner onDismiss={dismissBanner} />}
       {activeView === 'calendar' && (
         <CalendarGrid settings={settings} updateSettings={updateSettings} statsOpen={statsOpen} onStatsClose={() => setStatsOpen(false)} />
@@ -91,9 +108,10 @@ function App() {
   const [user, setUser] = useState<User | null>(null)
   const [authLoading, setAuthLoading] = useState(true)
   const [sharedUid] = useState(getSharedUid)
+  const [widgetUid] = useState(getWidgetUid)
 
   useEffect(() => {
-    if (sharedUid) {
+    if (sharedUid || widgetUid) {
       setAuthLoading(false)
       return
     }
@@ -110,6 +128,10 @@ function App() {
         Loading...
       </div>
     )
+  }
+
+  if (widgetUid) {
+    return <WidgetCalendarView uid={widgetUid} />
   }
 
   if (sharedUid) {
