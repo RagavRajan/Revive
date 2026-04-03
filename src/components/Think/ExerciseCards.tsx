@@ -1,0 +1,286 @@
+import { useState } from 'react'
+import type {
+  CAExercise, WordHuntExercise, ConsonantWordsExercise,
+  ReverseWordsExercise, WordTransformExercise, HomophonesExercise,
+  CreativePromptExercise, CAMethodExercise,
+} from '../../types/think'
+
+interface CardProps<T extends CAExercise> {
+  exercise: T
+  onComplete: (response: string) => void
+}
+
+function ItemList({ items, onRemove }: { items: string[]; onRemove: (i: number) => void }) {
+  if (items.length === 0) return null
+  return (
+    <div className="ca-items">
+      {items.map((item, i) => (
+        <div key={i} className="ca-item">
+          <span>{item}</span>
+          <button className="ca-item-x" onClick={() => onRemove(i)}>&times;</button>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function ProgressBar({ current, target }: { current: number; target: number }) {
+  const pct = Math.min((current / target) * 100, 100)
+  return (
+    <div className="ca-progress">
+      <div className="ca-progress-bar" style={{ width: `${pct}%` }} />
+      <span className="ca-progress-label">{current}/{target}</span>
+    </div>
+  )
+}
+
+function WordHuntCard({ exercise, onComplete }: CardProps<WordHuntExercise>) {
+  const [items, setItems] = useState<string[]>([])
+  const [input, setInput] = useState('')
+
+  const add = () => {
+    const word = input.trim().toLowerCase()
+    if (word && !items.includes(word)) {
+      setItems([...items, word])
+      setInput('')
+    }
+  }
+
+  return (
+    <div className="ca-card">
+      <div className="ca-source">Source word: <strong>{exercise.sourceWord.toUpperCase()}</strong></div>
+      <p className="ca-rule">Min {exercise.minLetters} letters. No proper names, slang, or foreign words.</p>
+      <ProgressBar current={items.length} target={exercise.targetCount} />
+      <div className="ca-input-row">
+        <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder="Type a word..." />
+        <button className="btn btn-primary" onClick={add}>Add</button>
+      </div>
+      <ItemList items={items} onRemove={i => setItems(items.filter((_, idx) => idx !== i))} />
+      {items.length >= exercise.targetCount && (
+        <button className="btn btn-primary ca-complete" onClick={() => onComplete(items.join(', '))}>Complete Exercise</button>
+      )}
+    </div>
+  )
+}
+
+function ConsonantWordsCard({ exercise, onComplete }: CardProps<ConsonantWordsExercise>) {
+  const [items, setItems] = useState<string[]>([])
+  const [input, setInput] = useState('')
+  const [customConsonants, setCustomConsonants] = useState('')
+
+  const add = () => {
+    const word = input.trim().toLowerCase()
+    if (word && !items.includes(word)) {
+      setItems([...items, word])
+      setInput('')
+    }
+  }
+
+  const consonants = exercise.userPicksLetters
+    ? customConsonants.toUpperCase().split('').filter(c => /[A-Z]/.test(c))
+    : exercise.consonants
+
+  return (
+    <div className="ca-card">
+      {exercise.userPicksLetters ? (
+        <div className="ca-input-row" style={{ marginBottom: 12 }}>
+          <label>Your consonants:</label>
+          <input value={customConsonants} onChange={e => setCustomConsonants(e.target.value)} placeholder="e.g. S, N, P" style={{ width: 120 }} />
+        </div>
+      ) : (
+        <div className="ca-source">Must contain: <strong>{consonants.join(', ')}</strong></div>
+      )}
+      <ProgressBar current={items.length} target={exercise.targetCount} />
+      <div className="ca-input-row">
+        <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder="Type a word..." />
+        <button className="btn btn-primary" onClick={add}>Add</button>
+      </div>
+      <ItemList items={items} onRemove={i => setItems(items.filter((_, idx) => idx !== i))} />
+      {items.length >= exercise.targetCount && (
+        <button className="btn btn-primary ca-complete" onClick={() => onComplete((exercise.userPicksLetters ? `[${consonants.join(',')}] ` : '') + items.join(', '))}>Complete Exercise</button>
+      )}
+    </div>
+  )
+}
+
+function ReverseWordsCard({ exercise, onComplete }: CardProps<ReverseWordsExercise>) {
+  const [pairs, setPairs] = useState<[string, string][]>([])
+  const [word1, setWord1] = useState('')
+  const [word2, setWord2] = useState('')
+
+  const add = () => {
+    const w1 = word1.trim().toLowerCase()
+    const w2 = word2.trim().toLowerCase()
+    if (w1 && w2) {
+      setPairs([...pairs, [w1, w2]])
+      setWord1('')
+      setWord2('')
+    }
+  }
+
+  return (
+    <div className="ca-card">
+      {exercise.addPlurals && <p className="ca-rule">Find pairs where adding "s" to both words creates new valid pairs.</p>}
+      <p className="ca-rule">Min {exercise.minLetters} letters per word.</p>
+      <ProgressBar current={pairs.length} target={exercise.targetCount} />
+      <div className="ca-input-row">
+        <input value={word1} onChange={e => setWord1(e.target.value)} placeholder="Word" style={{ flex: 1 }} />
+        <span style={{ color: 'var(--color-text-muted)' }}>=</span>
+        <input value={word2} onChange={e => setWord2(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder="Reversed" style={{ flex: 1 }} />
+        <button className="btn btn-primary" onClick={add}>Add</button>
+      </div>
+      {pairs.length > 0 && (
+        <div className="ca-items">
+          {pairs.map(([a, b], i) => (
+            <div key={i} className="ca-item">
+              <span>{a} = {b}</span>
+              <button className="ca-item-x" onClick={() => setPairs(pairs.filter((_, idx) => idx !== i))}>&times;</button>
+            </div>
+          ))}
+        </div>
+      )}
+      {pairs.length >= exercise.targetCount && (
+        <button className="btn btn-primary ca-complete" onClick={() => onComplete(pairs.map(([a, b]) => `${a} = ${b}`).join(', '))}>Complete Exercise</button>
+      )}
+    </div>
+  )
+}
+
+function WordTransformCard({ exercise, onComplete }: CardProps<WordTransformExercise>) {
+  const [chains, setChains] = useState<string[]>([])
+  const [input, setInput] = useState('')
+
+  const add = () => {
+    const chain = input.trim()
+    if (chain) {
+      setChains([...chains, chain])
+      setInput('')
+    }
+  }
+
+  return (
+    <div className="ca-card">
+      <div className="ca-rules">
+        {exercise.rules.map((r, i) => <p key={i} className="ca-rule">{i + 1}. {r}</p>)}
+      </div>
+      <div className="ca-source">Example: <strong>{exercise.example}</strong></div>
+      <ProgressBar current={chains.length} target={exercise.targetCount} />
+      <div className="ca-input-row">
+        <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder="e.g. stone → tone → one → on" style={{ flex: 1 }} />
+        <button className="btn btn-primary" onClick={add}>Add</button>
+      </div>
+      <ItemList items={chains} onRemove={i => setChains(chains.filter((_, idx) => idx !== i))} />
+      {chains.length >= exercise.targetCount && (
+        <button className="btn btn-primary ca-complete" onClick={() => onComplete(chains.join('\n'))}>Complete Exercise</button>
+      )}
+    </div>
+  )
+}
+
+function HomophonesCard({ exercise, onComplete }: CardProps<HomophonesExercise>) {
+  const [pairs, setPairs] = useState<string[]>([])
+  const [input, setInput] = useState('')
+
+  const add = () => {
+    const pair = input.trim()
+    if (pair) {
+      setPairs([...pairs, pair])
+      setInput('')
+    }
+  }
+
+  return (
+    <div className="ca-card">
+      <div className="ca-tips">
+        {exercise.tips.map((t, i) => <p key={i} className="ca-rule">Tip: {t}</p>)}
+      </div>
+      <div className="ca-source">Examples: {exercise.examples.join(' | ')}</div>
+      <ProgressBar current={pairs.length} target={exercise.targetCount} />
+      <div className="ca-input-row">
+        <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder="e.g. pear = pare" style={{ flex: 1 }} />
+        <button className="btn btn-primary" onClick={add}>Add</button>
+      </div>
+      <ItemList items={pairs} onRemove={i => setPairs(pairs.filter((_, idx) => idx !== i))} />
+      {pairs.length >= exercise.targetCount && (
+        <button className="btn btn-primary ca-complete" onClick={() => onComplete(pairs.join('\n'))}>Complete Exercise</button>
+      )}
+    </div>
+  )
+}
+
+function CreativePromptCard({ exercise, onComplete }: CardProps<CreativePromptExercise>) {
+  const [answers, setAnswers] = useState<string[]>(exercise.questions.map(() => ''))
+
+  const allFilled = answers.every(a => a.trim().length >= 5)
+
+  return (
+    <div className="ca-card">
+      <div className="ca-prompts">
+        {exercise.questions.map((q, i) => (
+          <div key={i} className="ca-prompt-item">
+            <label className="ca-prompt-q">{i + 1}. {q}</label>
+            <textarea
+              value={answers[i]}
+              onChange={e => {
+                const next = [...answers]
+                next[i] = e.target.value
+                setAnswers(next)
+              }}
+              rows={2}
+              placeholder="Your answer..."
+            />
+          </div>
+        ))}
+      </div>
+      {allFilled && (
+        <button className="btn btn-primary ca-complete" onClick={() => onComplete(exercise.questions.map((q, i) => `${q}\n${answers[i]}`).join('\n\n'))}>Complete Exercise</button>
+      )}
+    </div>
+  )
+}
+
+function CAExerciseCard({ exercise, onComplete }: CardProps<CAMethodExercise>) {
+  const [product, setProduct] = useState('')
+  const [response, setResponse] = useState('')
+
+  const canComplete = product.trim().length >= 2 && response.trim().length >= 20
+
+  return (
+    <div className="ca-card">
+      <div className="ca-guidance">{exercise.guidance}</div>
+      {exercise.productSuggestions && (
+        <div className="ca-suggestions">
+          {exercise.productSuggestions.map((s, i) => (
+            <button key={i} className="ca-chip" onClick={() => setProduct(s)}>{s}</button>
+          ))}
+        </div>
+      )}
+      <div className="ca-input-row" style={{ marginBottom: 12 }}>
+        <label style={{ whiteSpace: 'nowrap' }}>Product:</label>
+        <input value={product} onChange={e => setProduct(e.target.value)} placeholder="What are you working with?" style={{ flex: 1 }} />
+      </div>
+      <textarea
+        className="ca-textarea"
+        value={response}
+        onChange={e => setResponse(e.target.value)}
+        rows={10}
+        placeholder={`Write your ${exercise.targetCount} responses here...\n\n1. \n2. \n3. `}
+      />
+      {canComplete && (
+        <button className="btn btn-primary ca-complete" onClick={() => onComplete(`Product: ${product}\n\n${response}`)}>Complete Exercise</button>
+      )}
+    </div>
+  )
+}
+
+export function ExerciseCard({ exercise, onComplete }: { exercise: CAExercise; onComplete: (response: string) => void }) {
+  switch (exercise.type) {
+    case 'wordHunt': return <WordHuntCard exercise={exercise} onComplete={onComplete} />
+    case 'consonantWords': return <ConsonantWordsCard exercise={exercise} onComplete={onComplete} />
+    case 'reverseWords': return <ReverseWordsCard exercise={exercise} onComplete={onComplete} />
+    case 'wordTransform': return <WordTransformCard exercise={exercise} onComplete={onComplete} />
+    case 'homophones': return <HomophonesCard exercise={exercise} onComplete={onComplete} />
+    case 'creativePrompt': return <CreativePromptCard exercise={exercise} onComplete={onComplete} />
+    case 'caExercise': return <CAExerciseCard exercise={exercise} onComplete={onComplete} />
+  }
+}

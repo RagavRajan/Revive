@@ -15,6 +15,7 @@ import { WidgetCalendarView } from './components/Calendar/WidgetCalendarView'
 import { ScannerView } from './components/Scanner/ScannerView'
 import { BarcodeRegistration } from './components/Scanner/BarcodeRegistration'
 import { SettingsPage } from './components/Settings/SettingsPage'
+import { ThinkView } from './components/Think/ThinkView'
 import { ReminderBanner } from './components/ReminderBanner'
 
 function getSharedUid(): string | null {
@@ -74,6 +75,9 @@ function AuthenticatedApp({ user }: { user: User }) {
           checkedIn={checkedIn}
           onScan={recordScan}
         />
+      )}
+      {activeView === 'think' && (
+        <ThinkView />
       )}
       {activeView === 'settings' && checkedIn && (
         <SettingsPage
