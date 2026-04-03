@@ -37,26 +37,23 @@ export function ThinkView() {
         </div>
 
         <div className="ca-detail-body">
-          {activeTab === 'read' ? (
-            <div className="ca-reading">
-              <h3 className="ca-reading-title">Chapter {chapter.id}: {chapter.title}</h3>
-              {chapter.reading.split('\n\n').map((p, i) => <p key={i} className="ca-reading-p">{p}</p>)}
-            </div>
-          ) : (
-            <div className="ca-exercise">
-              <h3 className="ca-exercise-title">{exercise.title}</h3>
-              <p className="ca-exercise-prompt">{exercise.prompt}</p>
-              {completed && savedResponse ? (
-                <div className="ca-completed-section">
-                  <div className="ca-completed-badge">Completed</div>
-                  <div className="ca-saved-response">{savedResponse}</div>
-                  <button className="btn btn-outline" onClick={() => redo(exercise.id)}>Redo Exercise</button>
-                </div>
-              ) : (
-                <ExerciseCard exercise={exercise} onComplete={(response) => complete(exercise.id, response)} />
-              )}
-            </div>
-          )}
+          <div className="ca-reading" style={{ display: activeTab === 'read' ? 'block' : 'none' }}>
+            <h3 className="ca-reading-title">Chapter {chapter.id}: {chapter.title}</h3>
+            {chapter.reading.split('\n\n').map((p, i) => <p key={i} className="ca-reading-p">{p}</p>)}
+          </div>
+          <div className="ca-exercise" style={{ display: activeTab === 'exercise' ? 'block' : 'none' }}>
+            <h3 className="ca-exercise-title">{exercise.title}</h3>
+            <p className="ca-exercise-prompt">{exercise.prompt}</p>
+            {completed && savedResponse ? (
+              <div className="ca-completed-section">
+                <div className="ca-completed-badge">Completed</div>
+                <div className="ca-saved-response">{savedResponse}</div>
+                <button className="btn btn-outline" onClick={() => redo(exercise.id)}>Redo Exercise</button>
+              </div>
+            ) : (
+              <ExerciseCard exercise={exercise} onComplete={(response) => complete(exercise.id, response)} />
+            )}
+          </div>
         </div>
 
         <style>{detailStyles}</style>
