@@ -484,4 +484,11 @@ const detailStyles = `
     border-radius: var(--radius);
     border: 1px solid var(--color-border);
   }
+  .ca-error {
+    font-size: 0.8rem;
+    color: var(--color-danger);
+    padding: 6px 10px;
+    background: var(--color-danger-bg);
+    border-radius: var(--radius);
+  }
 `

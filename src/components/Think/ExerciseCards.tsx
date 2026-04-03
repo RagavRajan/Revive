@@ -34,16 +34,61 @@ function ProgressBar({ current, target }: { current: number; target: number }) {
   )
 }
 
+function ErrorMsg({ msg }: { msg: string | null }) {
+  if (!msg) return null
+  return <div className="ca-error">{msg}</div>
+}
+
+function letterFrequency(word: string): Record<string, number> {
+  const freq: Record<string, number> = {}
+  for (const ch of word.toLowerCase()) freq[ch] = (freq[ch] || 0) + 1
+  return freq
+}
+
+function validateWordHunt(word: string, sourceWord: string, minLetters: number, existing: string[]): string | null {
+  if (word.length < minLetters) return `Word must be at least ${minLetters} letters`
+  if (!/^[a-z]+$/.test(word)) return 'Letters only — no numbers or symbols'
+  if (existing.includes(word)) return 'Already added'
+  const available = letterFrequency(sourceWord)
+  const needed = letterFrequency(word)
+  for (const [ch, count] of Object.entries(needed)) {
+    if ((available[ch] || 0) < count) return `"${ch}" not available (or used too many times)`
+  }
+  return null
+}
+
+function validateConsonantWord(word: string, consonants: string[]): string | null {
+  if (word.length < 3) return 'Word must be at least 3 letters'
+  if (!/^[a-z]+$/.test(word)) return 'Letters only'
+  const lower = word.toLowerCase()
+  for (const c of consonants) {
+    if (!lower.includes(c.toLowerCase())) return `Missing required letter "${c}"`
+  }
+  return null
+}
+
+function validateReversePair(w1: string, w2: string, minLetters: number): string | null {
+  if (w1.length < minLetters) return `Word must be at least ${minLetters} letters`
+  if (w2.length < minLetters) return `Reversed must be at least ${minLetters} letters`
+  if (!/^[a-z]+$/.test(w1) || !/^[a-z]+$/.test(w2)) return 'Letters only'
+  if (w1 === w2) return 'Words must be different'
+  if (w1 !== w2.split('').reverse().join('')) return `"${w2}" is not "${w1}" spelled backwards`
+  return null
+}
+
 function WordHuntCard({ exercise, onComplete }: CardProps<WordHuntExercise>) {
   const [items, setItems] = useState<string[]>([])
   const [input, setInput] = useState('')
+  const [error, setError] = useState<string | null>(null)
 
   const add = () => {
     const word = input.trim().toLowerCase()
-    if (word && !items.includes(word)) {
-      setItems([...items, word])
-      setInput('')
-    }
+    if (!word) return
+    const err = validateWordHunt(word, exercise.sourceWord, exercise.minLetters, items)
+    if (err) { setError(err); return }
+    setError(null)
+    setItems([...items, word])
+    setInput('')
   }
 
   return (
@@ -52,9 +97,10 @@ function WordHuntCard({ exercise, onComplete }: CardProps<WordHuntExercise>) {
       <p className="ca-rule">Min {exercise.minLetters} letters. No proper names, slang, or foreign words.</p>
       <ProgressBar current={items.length} target={exercise.targetCount} />
       <div className="ca-input-row">
-        <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder="Type a word..." />
+        <input value={input} onChange={e => { setInput(e.target.value); setError(null) }} onKeyDown={e => e.key === 'Enter' && add()} placeholder="Type a word..." />
         <button className="btn btn-primary" onClick={add}>Add</button>
       </div>
+      <ErrorMsg msg={error} />
       <ItemList items={items} onRemove={i => setItems(items.filter((_, idx) => idx !== i))} />
       {items.length >= exercise.targetCount && (
         <button className="btn btn-primary ca-complete" onClick={() => onComplete(items.join(', '))}>Complete Exercise</button>
@@ -67,18 +113,24 @@ function ConsonantWordsCard({ exercise, onComplete }: CardProps<ConsonantWordsEx
   const [items, setItems] = useState<string[]>([])
   const [input, setInput] = useState('')
   const [customConsonants, setCustomConsonants] = useState('')
-
-  const add = () => {
-    const word = input.trim().toLowerCase()
-    if (word && !items.includes(word)) {
-      setItems([...items, word])
-      setInput('')
-    }
-  }
+  const [error, setError] = useState<string | null>(null)
 
   const consonants = exercise.userPicksLetters
     ? customConsonants.toUpperCase().split('').filter(c => /[A-Z]/.test(c))
     : exercise.consonants
+
+  const add = () => {
+    const word = input.trim().toLowerCase()
+    if (!word) return
+    if (items.includes(word)) { setError('Already added'); return }
+    if (consonants.length > 0) {
+      const err = validateConsonantWord(word, consonants)
+      if (err) { setError(err); return }
+    }
+    setError(null)
+    setItems([...items, word])
+    setInput('')
+  }
 
   return (
     <div className="ca-card">
@@ -92,9 +144,10 @@ function ConsonantWordsCard({ exercise, onComplete }: CardProps<ConsonantWordsEx
       )}
       <ProgressBar current={items.length} target={exercise.targetCount} />
       <div className="ca-input-row">
-        <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder="Type a word..." />
+        <input value={input} onChange={e => { setInput(e.target.value); setError(null) }} onKeyDown={e => e.key === 'Enter' && add()} placeholder="Type a word..." />
         <button className="btn btn-primary" onClick={add}>Add</button>
       </div>
+      <ErrorMsg msg={error} />
       <ItemList items={items} onRemove={i => setItems(items.filter((_, idx) => idx !== i))} />
       {items.length >= exercise.targetCount && (
         <button className="btn btn-primary ca-complete" onClick={() => onComplete((exercise.userPicksLetters ? `[${consonants.join(',')}] ` : '') + items.join(', '))}>Complete Exercise</button>
@@ -107,28 +160,33 @@ function ReverseWordsCard({ exercise, onComplete }: CardProps<ReverseWordsExerci
   const [pairs, setPairs] = useState<[string, string][]>([])
   const [word1, setWord1] = useState('')
   const [word2, setWord2] = useState('')
+  const [error, setError] = useState<string | null>(null)
 
   const add = () => {
     const w1 = word1.trim().toLowerCase()
     const w2 = word2.trim().toLowerCase()
-    if (w1 && w2) {
-      setPairs([...pairs, [w1, w2]])
-      setWord1('')
-      setWord2('')
-    }
+    if (!w1 || !w2) return
+    const err = validateReversePair(w1, w2, exercise.minLetters)
+    if (err) { setError(err); return }
+    if (pairs.some(([a]) => a === w1)) { setError('Already added'); return }
+    setError(null)
+    setPairs([...pairs, [w1, w2]])
+    setWord1('')
+    setWord2('')
   }
 
   return (
     <div className="ca-card">
       {exercise.addPlurals && <p className="ca-rule">Find pairs where adding "s" to both words creates new valid pairs.</p>}
-      <p className="ca-rule">Min {exercise.minLetters} letters per word.</p>
+      <p className="ca-rule">Min {exercise.minLetters} letters per word. The second word must be the first spelled backwards.</p>
       <ProgressBar current={pairs.length} target={exercise.targetCount} />
       <div className="ca-input-row">
-        <input value={word1} onChange={e => setWord1(e.target.value)} placeholder="Word" style={{ flex: 1 }} />
+        <input value={word1} onChange={e => { setWord1(e.target.value); setError(null) }} placeholder="Word" style={{ flex: 1 }} />
         <span style={{ color: 'var(--color-text-muted)' }}>=</span>
-        <input value={word2} onChange={e => setWord2(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder="Reversed" style={{ flex: 1 }} />
+        <input value={word2} onChange={e => { setWord2(e.target.value); setError(null) }} onKeyDown={e => e.key === 'Enter' && add()} placeholder="Reversed" style={{ flex: 1 }} />
         <button className="btn btn-primary" onClick={add}>Add</button>
       </div>
+      <ErrorMsg msg={error} />
       {pairs.length > 0 && (
         <div className="ca-items">
           {pairs.map(([a, b], i) => (
