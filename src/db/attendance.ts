@@ -51,12 +51,21 @@ export async function addEvent(dateKey: string, event: AttendanceEvent): Promise
   return record
 }
 
-export async function toggleDayOff(dateKey: string): Promise<DayRecord> {
+export async function toggleDayOff(dateKey: string, useLifeline = false): Promise<DayRecord> {
   const existing = await getDayRecord(dateKey)
   const record: DayRecord = existing ?? { date: dateKey, events: [], isDayOff: false }
   record.isDayOff = !record.isDayOff
+  record.isLifeline = record.isDayOff && useLifeline ? true : undefined
   await saveDayRecord(record)
   return record
+}
+
+export async function getLifelinesUsedInMonth(year: number, month: number): Promise<number> {
+  const start = `${year}-${String(month + 1).padStart(2, '0')}-01`
+  const lastDay = new Date(year, month + 1, 0).getDate()
+  const end = `${year}-${String(month + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+  const records = await getMonthRecords(start, end)
+  return records.filter(r => r.isDayOff && r.isLifeline).length
 }
 
 export function isCheckedIn(record: DayRecord | undefined): boolean {

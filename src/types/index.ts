@@ -9,6 +9,7 @@ export interface DayRecord {
   date: string // "YYYY-MM-DD"
   events: AttendanceEvent[]
   isDayOff: boolean
+  isLifeline?: boolean // true if day-off was marked using a lifeline (same-day)
 }
 
 export interface AppSettings {

@@ -33,9 +33,10 @@ export function useAttendance() {
   }, [checkedIn])
 
   const toggleTodayDayOff = useCallback(async () => {
-    const updated = await toggleDayOff(todayKey())
+    const isMarkingOff = !todayRecord?.isDayOff
+    const updated = await toggleDayOff(todayKey(), isMarkingOff)
     setTodayRecord(updated)
-  }, [])
+  }, [todayRecord])
 
   return { todayRecord, checkedIn, hasCheckedInToday, loading, recordScan, toggleTodayDayOff, refresh }
 }

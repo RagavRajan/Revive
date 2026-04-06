@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../firebase/config'
 import type { DayRecord } from '../../types'
-import { getDayRecord, toggleDayOff } from '../../db/attendance'
-import { formatTime, fromDateKey, isWeekend } from '../../utils/date'
+import { getDayRecord, toggleDayOff, getLifelinesUsedInMonth } from '../../db/attendance'
+import { formatTime, fromDateKey, isWeekend, isToday, isFutureDate } from '../../utils/date'
 import { HOLIDAYS_2026 } from '../../utils/constants'
+
+const LIFELINES_PER_MONTH = 2
 
 interface Props {
   dateKey: string
@@ -16,6 +18,12 @@ interface Props {
 
 export function DayDetail({ dateKey, onClose, onUpdate, readOnly, uid }: Props) {
   const [record, setRecord] = useState<DayRecord | null>(null)
+  const [lifelinesUsed, setLifelinesUsed] = useState(0)
+
+  const date = fromDateKey(dateKey)
+  const isTodayDate = isToday(dateKey)
+  const isFuture = isFutureDate(dateKey)
+  const lifelinesRemaining = LIFELINES_PER_MONTH - lifelinesUsed
 
   useEffect(() => {
     if (readOnly && uid) {
@@ -24,10 +32,9 @@ export function DayDetail({ dateKey, onClose, onUpdate, readOnly, uid }: Props) 
       getDoc(ref).then(snap => setRecord(snap.exists() ? snap.data() as DayRecord : null))
     } else {
       getDayRecord(dateKey).then(r => setRecord(r ?? null))
+      getLifelinesUsedInMonth(date.getFullYear(), date.getMonth()).then(setLifelinesUsed)
     }
   }, [dateKey, readOnly, uid])
-
-  const date = fromDateKey(dateKey)
   const formatted = new Intl.DateTimeFormat('en-US', {
     weekday: 'long',
     month: 'long',
@@ -36,8 +43,11 @@ export function DayDetail({ dateKey, onClose, onUpdate, readOnly, uid }: Props) 
   }).format(date)
 
   const handleToggleDayOff = async () => {
-    const updated = await toggleDayOff(dateKey)
+    const needsLifeline = isTodayDate && !record?.isDayOff
+    const updated = await toggleDayOff(dateKey, needsLifeline)
     setRecord(updated)
+    // Refresh lifeline count after toggle
+    getLifelinesUsedInMonth(date.getFullYear(), date.getMonth()).then(setLifelinesUsed)
     onUpdate()
   }
 
@@ -76,7 +86,9 @@ export function DayDetail({ dateKey, onClose, onUpdate, readOnly, uid }: Props) 
         )}
 
         {record?.isDayOff && (
-          <div className="day-detail-badge day-off-badge">Day Off</div>
+          <div className="day-detail-badge day-off-badge">
+            {record.isLifeline ? 'Day Off (Lifeline)' : 'Day Off'}
+          </div>
         )}
 
         {sortedEvents.length > 0 ? (
@@ -120,15 +132,30 @@ export function DayDetail({ dateKey, onClose, onUpdate, readOnly, uid }: Props) 
           </div>
         )}
 
-        {!readOnly && (
-          <button
-            className={`btn ${record?.isDayOff ? 'btn-outline' : 'btn-primary'}`}
-            onClick={handleToggleDayOff}
-            style={{ width: '100%', marginTop: 16 }}
-          >
-            {record?.isDayOff ? 'Remove Day Off' : 'Mark as Day Off'}
-          </button>
-        )}
+        {!readOnly && !isFuture && (() => {
+          const isAlreadyOff = record?.isDayOff
+          const disabled = isTodayDate && !isAlreadyOff && lifelinesRemaining <= 0
+
+          return (
+            <>
+              <button
+                className={`btn ${isAlreadyOff ? 'btn-outline' : 'btn-primary'}`}
+                onClick={handleToggleDayOff}
+                disabled={disabled}
+                style={{ width: '100%', marginTop: 16 }}
+              >
+                {isAlreadyOff
+                  ? 'Remove Day Off'
+                  : isTodayDate
+                    ? `Use Lifeline (${lifelinesRemaining}/${LIFELINES_PER_MONTH} left)`
+                    : 'Mark as Day Off'}
+              </button>
+              {disabled && (
+                <p className="lifeline-exhausted">No lifelines remaining this month</p>
+              )}
+            </>
+          )
+        })()}
       </div>
 
       <style>{`
@@ -261,6 +288,12 @@ export function DayDetail({ dateKey, onClose, onUpdate, readOnly, uid }: Props) 
           color: var(--color-text-muted);
           text-align: center;
           padding: 20px 0;
+        }
+        .lifeline-exhausted {
+          color: var(--color-danger);
+          font-size: 0.8rem;
+          text-align: center;
+          margin-top: 8px;
         }
       `}</style>
     </div>
