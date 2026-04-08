@@ -204,16 +204,45 @@ function ReverseWordsCard({ exercise, onComplete }: CardProps<ReverseWordsExerci
   )
 }
 
+function parseChain(input: string): string[] {
+  return input.split(/\s*(?:→|->|,)\s*/).map(w => w.trim().toLowerCase()).filter(Boolean)
+}
+
+function validateWordTransform(input: string, wordLength: number | undefined, existing: string[]): string | null {
+  const words = parseChain(input)
+  if (words.length < 2) return 'Enter a chain of at least 2 words separated by → or ->'
+  for (const w of words) {
+    if (!/^[a-z]+$/.test(w)) return `"${w}" — letters only`
+    if (wordLength && w.length !== wordLength) return `"${w}" must be ${wordLength} letters`
+  }
+  for (let i = 1; i < words.length; i++) {
+    if (words[i].length !== words[i - 1].length) return `"${words[i - 1]}" and "${words[i]}" must be the same length`
+    let diffs = 0
+    for (let j = 0; j < words[i].length; j++) {
+      if (words[i][j] !== words[i - 1][j]) diffs++
+    }
+    if (diffs === 0) return `"${words[i - 1]}" and "${words[i]}" are the same word`
+    if (diffs > 1) return `"${words[i - 1]}" → "${words[i]}" changes ${diffs} letters (only 1 allowed)`
+  }
+  const key = words[0]
+  if (existing.some(c => parseChain(c)[0] === key)) return `Chain starting with "${key}" already added`
+  return null
+}
+
 function WordTransformCard({ exercise, onComplete }: CardProps<WordTransformExercise>) {
   const [chains, setChains] = useState<string[]>([])
   const [input, setInput] = useState('')
+  const [error, setError] = useState<string | null>(null)
 
   const add = () => {
     const chain = input.trim()
-    if (chain) {
-      setChains([...chains, chain])
-      setInput('')
-    }
+    if (!chain) return
+    const err = validateWordTransform(chain, exercise.wordLength, chains)
+    if (err) { setError(err); return }
+    setError(null)
+    const words = parseChain(chain)
+    setChains([...chains, words.join(' → ')])
+    setInput('')
   }
 
   return (
@@ -224,9 +253,10 @@ function WordTransformCard({ exercise, onComplete }: CardProps<WordTransformExer
       <div className="ca-source">Example: <strong>{exercise.example}</strong></div>
       <ProgressBar current={chains.length} target={exercise.targetCount} />
       <div className="ca-input-row">
-        <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder="e.g. stone → tone → one → on" style={{ flex: 1 }} />
+        <input value={input} onChange={e => { setInput(e.target.value); setError(null) }} onKeyDown={e => e.key === 'Enter' && add()} placeholder="e.g. ride -> hide -> side -> wide" style={{ flex: 1 }} />
         <button className="btn btn-primary" onClick={add}>Add</button>
       </div>
+      <ErrorMsg msg={error} />
       <ItemList items={chains} onRemove={i => setChains(chains.filter((_, idx) => idx !== i))} />
       {chains.length >= exercise.targetCount && (
         <button className="btn btn-primary ca-complete" onClick={() => onComplete(chains.join('\n'))}>Complete Exercise</button>
