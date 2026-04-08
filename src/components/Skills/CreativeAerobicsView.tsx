@@ -3,7 +3,11 @@ import { useCreativeAerobics } from '../../hooks/useCreativeAerobics'
 import { chapters, getExercise, getChapterForDay, TOTAL_DAYS } from '../../data/creativeAerobics'
 import { ExerciseCard } from './ExerciseCards'
 
-export function ThinkView() {
+interface Props {
+  onBack: () => void
+}
+
+export function CreativeAerobicsView({ onBack }: Props) {
   const { loading, complete, redo, isCompleted, getResponse, completedCount } = useCreativeAerobics()
   const [selectedDay, setSelectedDay] = useState<number | null>(null)
   const [activeTab, setActiveTab] = useState<'read' | 'exercise'>('exercise')
@@ -65,9 +69,11 @@ export function ThinkView() {
   return (
     <div className="ca-list">
       <div className="ca-list-header">
-        <h2 className="ca-list-title">Creative Aerobics</h2>
+        <button className="ca-back" onClick={onBack}>&larr; Skills</button>
         <div className="ca-list-progress">{completedCount}/{TOTAL_DAYS} completed</div>
       </div>
+
+      <h2 className="ca-list-title">Creative Aerobics</h2>
 
       <div className="ca-chapters">
         {chapters.map(ch => (
@@ -111,12 +117,13 @@ const listStyles = `
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
   }
   .ca-list-title {
     font-size: 1.2rem;
     font-weight: 700;
     color: var(--color-text);
+    margin-bottom: 20px;
   }
   .ca-list-progress {
     font-size: 0.85rem;

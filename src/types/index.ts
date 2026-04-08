@@ -22,4 +22,4 @@ export interface AppSettings {
 
 export type DayStatus = 'on-time' | 'missed' | 'day-off' | 'holiday' | 'weekend' | 'future' | 'no-record'
 
-export type ActiveView = 'calendar' | 'scanner' | 'settings' | 'think'
+export type ActiveView = 'calendar' | 'scanner' | 'settings' | 'skills'

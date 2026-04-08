@@ -44,11 +44,11 @@ export function Layout({ activeView, onNavigate, onSignOut, onStats, userEmail, 
           <span className="nav-label">Scan</span>
         </button>
         <button
-          className={`nav-tab ${activeView === 'think' ? 'nav-active' : ''}`}
-          onClick={() => onNavigate('think')}
+          className={`nav-tab ${activeView === 'skills' ? 'nav-active' : ''}`}
+          onClick={() => onNavigate('skills')}
         >
           <span className="nav-icon">&#128161;</span>
-          <span className="nav-label">Think</span>
+          <span className="nav-label">Skills</span>
         </button>
         <button
           className={`nav-tab ${activeView === 'settings' ? 'nav-active' : ''} ${!checkedIn ? 'nav-disabled' : ''}`}
