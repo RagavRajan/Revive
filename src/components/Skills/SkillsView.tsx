@@ -1,19 +1,44 @@
 import { useState } from 'react'
 import { useCreativeAerobics } from '../../hooks/useCreativeAerobics'
-import { TOTAL_DAYS } from '../../data/creativeAerobics'
+import { useSpeedReading } from '../../hooks/useSpeedReading'
+import { TOTAL_DAYS as CA_TOTAL } from '../../data/creativeAerobics'
+import { TOTAL_DAYS as SR_TOTAL } from '../../data/speedReading'
 import { CreativeAerobicsView } from './CreativeAerobicsView'
+import { SpeedReadingView } from './SpeedReadingView'
 
-type ActiveSkill = null | 'creative-aerobics'
+type ActiveSkill = null | 'creative-aerobics' | 'speed-reading'
+
+function ProgressRing({ completed, total }: { completed: number; total: number }) {
+  const pct = Math.round((completed / total) * 100)
+  return (
+    <div className="skill-progress-ring">
+      <svg viewBox="0 0 36 36">
+        <path
+          className="skill-ring-bg"
+          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+        />
+        <path
+          className="skill-ring-fill"
+          strokeDasharray={`${pct}, 100`}
+          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+        />
+      </svg>
+      <span className="skill-ring-text">{completed}/{total}</span>
+    </div>
+  )
+}
 
 export function SkillsView() {
   const [activeSkill, setActiveSkill] = useState<ActiveSkill>(null)
-  const { completedCount } = useCreativeAerobics()
+  const { completedCount: caCompleted } = useCreativeAerobics()
+  const { completedCount: srCompleted } = useSpeedReading()
 
   if (activeSkill === 'creative-aerobics') {
     return <CreativeAerobicsView onBack={() => setActiveSkill(null)} />
   }
-
-  const pct = Math.round((completedCount / TOTAL_DAYS) * 100)
+  if (activeSkill === 'speed-reading') {
+    return <SpeedReadingView onBack={() => setActiveSkill(null)} />
+  }
 
   return (
     <div className="skills-hub">
@@ -26,20 +51,16 @@ export function SkillsView() {
             <div className="skill-name">Creative Aerobics</div>
             <div className="skill-desc">30-day creative thinking program</div>
           </div>
-          <div className="skill-progress-ring">
-            <svg viewBox="0 0 36 36">
-              <path
-                className="skill-ring-bg"
-                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-              />
-              <path
-                className="skill-ring-fill"
-                strokeDasharray={`${pct}, 100`}
-                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-              />
-            </svg>
-            <span className="skill-ring-text">{completedCount}/{TOTAL_DAYS}</span>
+          <ProgressRing completed={caCompleted} total={CA_TOTAL} />
+        </button>
+
+        <button className="skill-card" onClick={() => setActiveSkill('speed-reading')}>
+          <div className="skill-icon">&#128218;</div>
+          <div className="skill-info">
+            <div className="skill-name">Speed Reading</div>
+            <div className="skill-desc">30-day reading mastery program</div>
           </div>
+          <ProgressRing completed={srCompleted} total={SR_TOTAL} />
         </button>
       </div>
 
