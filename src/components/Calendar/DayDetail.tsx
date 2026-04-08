@@ -3,7 +3,7 @@ import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../firebase/config'
 import type { DayRecord } from '../../types'
 import { getDayRecord, toggleDayOff, getLifelinesUsedInMonth } from '../../db/attendance'
-import { formatTime, fromDateKey, isWeekend, isToday, isFutureDate } from '../../utils/date'
+import { formatTime, fromDateKey, isWeekend, isToday } from '../../utils/date'
 import { HOLIDAYS_2026 } from '../../utils/constants'
 
 const LIFELINES_PER_MONTH = 2
@@ -22,7 +22,6 @@ export function DayDetail({ dateKey, onClose, onUpdate, readOnly, uid }: Props) 
 
   const date = fromDateKey(dateKey)
   const isTodayDate = isToday(dateKey)
-  const isFuture = isFutureDate(dateKey)
   const lifelinesRemaining = LIFELINES_PER_MONTH - lifelinesUsed
 
   useEffect(() => {
@@ -132,7 +131,7 @@ export function DayDetail({ dateKey, onClose, onUpdate, readOnly, uid }: Props) 
           </div>
         )}
 
-        {!readOnly && !isFuture && (() => {
+        {!readOnly && (() => {
           const isAlreadyOff = record?.isDayOff
           const disabled = isTodayDate && !isAlreadyOff && lifelinesRemaining <= 0
 
