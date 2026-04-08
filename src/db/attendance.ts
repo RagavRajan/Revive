@@ -55,7 +55,11 @@ export async function toggleDayOff(dateKey: string, useLifeline = false): Promis
   const existing = await getDayRecord(dateKey)
   const record: DayRecord = existing ?? { date: dateKey, events: [], isDayOff: false }
   record.isDayOff = !record.isDayOff
-  record.isLifeline = record.isDayOff && useLifeline ? true : undefined
+  if (record.isDayOff && useLifeline) {
+    record.isLifeline = true
+  } else {
+    delete record.isLifeline
+  }
   await saveDayRecord(record)
   return record
 }
