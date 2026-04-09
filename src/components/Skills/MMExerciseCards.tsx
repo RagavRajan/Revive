@@ -353,7 +353,7 @@ function SequenceInputCard({ exercise, onComplete }: CardProps<SequenceInputExer
     setChecked(true)
     if (allCorrect) {
       onComplete(`Score: ${score}/${exercise.sequences.length}\n` +
-        exercise.sequences.map((seq, i) => `${seq.shown.join(', ')}, ? → ${seq.answer} (${seq.explanation})`).join('\n'))
+        exercise.sequences.map(seq => `${seq.shown.join(', ')}, ? → ${seq.answer} (${seq.explanation})`).join('\n'))
     }
   }
 
