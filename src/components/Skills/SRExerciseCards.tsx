@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import type {
   SRExercise, MatchPairsExercise, VocabFillExercise,
   MultipleChoiceExercise, ReflectionExercise, SpeedLogExercise,
@@ -220,28 +220,111 @@ function ReflectionCard({ exercise, onComplete }: CardProps<ReflectionExercise>)
 }
 
 function SpeedLogCard({ exercise, onComplete }: CardProps<SpeedLogExercise>) {
+  const hasPassage = !!exercise.passage
+  const [phase, setPhase] = useState<'intro' | 'reading' | 'done'>('intro')
+  const [elapsed, setElapsed] = useState(0)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [wordsRead, setWordsRead] = useState('')
   const [timeMinutes, setTimeMinutes] = useState('5')
   const [answers, setAnswers] = useState<(number | null)[]>(exercise.comprehensionQuestions.map(() => null))
   const [checked, setChecked] = useState(false)
 
-  const wpm = wordsRead && timeMinutes ? Math.round(Number(wordsRead) / Number(timeMinutes)) : 0
+  const stopTimer = useCallback(() => {
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
+  }, [])
+
+  useEffect(() => () => stopTimer(), [stopTimer])
+
+  const startReading = () => {
+    setElapsed(0)
+    setPhase('reading')
+    timerRef.current = setInterval(() => setElapsed(s => s + 1), 1000)
+  }
+
+  const finishReading = () => {
+    stopTimer()
+    const mins = (elapsed / 60).toFixed(2)
+    setTimeMinutes(mins)
+    if (exercise.passageWordCount) setWordsRead(String(exercise.passageWordCount))
+    setPhase('done')
+  }
+
+  const formatTime = (s: number) => {
+    const m = Math.floor(s / 60)
+    const sec = s % 60
+    return `${m}:${sec.toString().padStart(2, '0')}`
+  }
+
+  const effectiveTime = phase === 'done' && hasPassage ? timeMinutes : timeMinutes
+  const wpm = wordsRead && effectiveTime ? Math.round(Number(wordsRead) / Number(effectiveTime)) : 0
   const results = answers.map((a, i) => a === exercise.comprehensionQuestions[i].correctIndex)
   const allCorrect = results.every(Boolean)
   const score = results.filter(Boolean).length
   const allAnswered = answers.every(a => a !== null)
-  const hasSpeed = Number(wordsRead) > 0 && Number(timeMinutes) > 0
+  const hasSpeed = Number(wordsRead) > 0 && Number(effectiveTime) > 0
 
   const check = () => {
     setChecked(true)
     if (allCorrect && hasSpeed) {
-      onComplete(`WPM: ${wpm} (${wordsRead} words in ${timeMinutes} min)\nComprehension: ${score}/${exercise.comprehensionQuestions.length}`)
+      onComplete(`WPM: ${wpm} (${wordsRead} words in ${effectiveTime} min)\nComprehension: ${score}/${exercise.comprehensionQuestions.length}`)
     }
   }
 
+  // Passage-based reading with timer
+  if (hasPassage && phase === 'intro') {
+    return (
+      <div className="sr-card">
+        <div className="sr-guidance">{exercise.instructions}</div>
+        {exercise.passageWordCount && (
+          <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginTop: 8 }}>
+            Passage length: {exercise.passageWordCount.toLocaleString()} words
+          </div>
+        )}
+        <button className="btn btn-primary sr-complete" onClick={startReading}>Start Reading</button>
+      </div>
+    )
+  }
+
+  if (hasPassage && phase === 'reading') {
+    return (
+      <div className="sr-card">
+        <div className="sr-timer-bar">
+          <span className="sr-timer-clock">{formatTime(elapsed)}</span>
+          <button className="btn btn-primary" onClick={finishReading} style={{ fontSize: '0.8rem', padding: '4px 14px' }}>
+            Stop Timer
+          </button>
+        </div>
+        <div className="sr-passage">
+          {exercise.passage!.split('\n\n').map((p, i) => <p key={i} className="sr-reading-p">{p}</p>)}
+        </div>
+        <div className="sr-timer-bar" style={{ borderTop: '1px solid var(--color-border)', borderBottom: 'none', marginTop: 12, paddingTop: 12 }}>
+          <span className="sr-timer-clock">{formatTime(elapsed)}</span>
+          <button className="btn btn-primary" onClick={finishReading} style={{ fontSize: '0.8rem', padding: '4px 14px' }}>
+            Stop Timer
+          </button>
+        </div>
+        <style>{`
+          .sr-timer-bar {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 8px 0; margin-bottom: 12px;
+            border-bottom: 1px solid var(--color-border);
+            position: sticky; top: 0; background: var(--color-bg);
+            z-index: 1;
+          }
+          .sr-timer-clock {
+            font-size: 1.4rem; font-weight: 700; color: var(--color-primary);
+            font-variant-numeric: tabular-nums;
+          }
+          .sr-passage { line-height: 1.8; }
+        `}</style>
+      </div>
+    )
+  }
+
+  // Done phase (passage-based) or non-passage flow
   return (
     <div className="sr-card">
-      <div className="sr-guidance">{exercise.instructions}</div>
+      {!hasPassage && <div className="sr-guidance">{exercise.instructions}</div>}
 
       <div className="sr-speed-inputs">
         <div className="sr-speed-field">

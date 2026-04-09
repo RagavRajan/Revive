@@ -33,6 +33,8 @@ export interface SpeedLogExercise extends SRExerciseBase {
   type: 'speedLog'
   instructions: string
   wordCount: number
+  passage?: string
+  passageWordCount?: number
   comprehensionQuestions: { question: string; options: string[]; correctIndex: number }[]
 }
 
