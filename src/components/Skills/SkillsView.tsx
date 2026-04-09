@@ -1,12 +1,15 @@
 import { useState } from 'react'
 import { useCreativeAerobics } from '../../hooks/useCreativeAerobics'
 import { useSpeedReading } from '../../hooks/useSpeedReading'
+import { useMaximizeMemory } from '../../hooks/useMaximizeMemory'
 import { TOTAL_DAYS as CA_TOTAL } from '../../data/creativeAerobics'
 import { TOTAL_DAYS as SR_TOTAL } from '../../data/speedReading'
+import { TOTAL_DAYS as MM_TOTAL } from '../../data/maximizeMemory'
 import { CreativeAerobicsView } from './CreativeAerobicsView'
 import { SpeedReadingView } from './SpeedReadingView'
+import { MaximizeMemoryView } from './MaximizeMemoryView'
 
-type ActiveSkill = null | 'creative-aerobics' | 'speed-reading'
+type ActiveSkill = null | 'creative-aerobics' | 'speed-reading' | 'maximize-memory'
 
 function ProgressRing({ completed, total }: { completed: number; total: number }) {
   const pct = Math.round((completed / total) * 100)
@@ -32,12 +35,16 @@ export function SkillsView() {
   const [activeSkill, setActiveSkill] = useState<ActiveSkill>(null)
   const { completedCount: caCompleted } = useCreativeAerobics()
   const { completedCount: srCompleted } = useSpeedReading()
+  const { completedCount: mmCompleted } = useMaximizeMemory()
 
   if (activeSkill === 'creative-aerobics') {
     return <CreativeAerobicsView onBack={() => setActiveSkill(null)} />
   }
   if (activeSkill === 'speed-reading') {
     return <SpeedReadingView onBack={() => setActiveSkill(null)} />
+  }
+  if (activeSkill === 'maximize-memory') {
+    return <MaximizeMemoryView onBack={() => setActiveSkill(null)} />
   }
 
   return (
@@ -61,6 +68,15 @@ export function SkillsView() {
             <div className="skill-desc">30-day reading mastery program</div>
           </div>
           <ProgressRing completed={srCompleted} total={SR_TOTAL} />
+        </button>
+
+        <button className="skill-card" onClick={() => setActiveSkill('maximize-memory')}>
+          <div className="skill-icon">&#129504;</div>
+          <div className="skill-info">
+            <div className="skill-name">Maximize Your Memory</div>
+            <div className="skill-desc">45-day memory mastery program</div>
+          </div>
+          <ProgressRing completed={mmCompleted} total={MM_TOTAL} />
         </button>
       </div>
 
