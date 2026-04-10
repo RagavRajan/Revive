@@ -194,4 +194,13 @@ const detailStyles = `
   .mm-seq-correct { border-color: var(--color-success); }
   .mm-seq-wrong { border-color: var(--color-danger); }
   .mm-seq-explanation { font-size: 0.78rem; color: var(--color-text-muted); margin-top: 6px; font-style: italic; }
+  .mm-chain-stats { display: flex; gap: 16px; font-size: 0.8rem; color: var(--color-text-muted); font-weight: 500; }
+  .mm-chain-step { font-size: 0.78rem; font-weight: 700; color: var(--color-primary); text-transform: uppercase; letter-spacing: 0.5px; }
+  .mm-chain-pair { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 16px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); }
+  .mm-chain-word { font-size: 1.15rem; font-weight: 700; color: var(--color-text); padding: 6px 16px; background: var(--color-surface-hover); border-radius: var(--radius); }
+  .mm-chain-arrow { font-size: 1.3rem; color: var(--color-primary); font-weight: 700; }
+  .mm-chain-association { font-size: 0.88rem; color: var(--color-text); line-height: 1.7; padding: 12px 14px; background: var(--color-surface); border-radius: var(--radius); border-left: 3px solid var(--color-primary); font-style: italic; }
+  .mm-chain-hint { font-size: 0.78rem; color: var(--color-text-muted); text-align: center; font-style: italic; }
+  .mm-chain-intro { font-size: 0.85rem; color: var(--color-primary); font-weight: 600; padding: 8px 12px; background: var(--color-surface); border-radius: var(--radius); text-align: center; }
+  .mm-chain-recall-hint { font-size: 0.9rem; color: var(--color-text); line-height: 1.5; padding: 10px 12px; background: var(--color-surface); border-radius: var(--radius); }
 `

@@ -1,4 +1,4 @@
-export type MMExerciseType = 'multipleChoice' | 'reflection' | 'matchPairs' | 'speedLog' | 'timedRecall' | 'sequenceInput'
+export type MMExerciseType = 'multipleChoice' | 'reflection' | 'matchPairs' | 'speedLog' | 'timedRecall' | 'sequenceInput' | 'chainLinking'
 
 interface MMExerciseBase {
   id: number
@@ -44,6 +44,16 @@ export interface SequenceInputExercise extends MMExerciseBase {
   sequences: { shown: number[]; answer: number; explanation: string }[]
 }
 
+export interface ChainLinkingExercise extends MMExerciseBase {
+  type: 'chainLinking'
+  instructions: string
+  guidedChain: {
+    words: string[]
+    associations: string[]
+  }
+  independentWords: string[]
+}
+
 export type MMExercise =
   | MMMultipleChoiceExercise
   | MMReflectionExercise
@@ -51,6 +61,7 @@ export type MMExercise =
   | MMSpeedLogExercise
   | TimedRecallExercise
   | SequenceInputExercise
+  | ChainLinkingExercise
 
 export interface MMChapter {
   id: number

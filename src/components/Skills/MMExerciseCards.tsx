@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import type {
   MMExercise, MMMatchPairsExercise, MMMultipleChoiceExercise,
   MMReflectionExercise, MMSpeedLogExercise, TimedRecallExercise, SequenceInputExercise,
+  ChainLinkingExercise,
 } from '../../types/maximizeMemory'
 
 interface CardProps<T extends MMExercise> {
@@ -386,6 +387,196 @@ function SequenceInputCard({ exercise, onComplete }: CardProps<SequenceInputExer
   )
 }
 
+// === Chain Linking ===
+function ChainLinkingCard({ exercise, onComplete }: CardProps<ChainLinkingExercise>) {
+  const allWords = useMemo(() => [...exercise.guidedChain.words, ...exercise.independentWords], [exercise])
+  const guidedPairCount = exercise.guidedChain.associations.length
+  const independentPairCount = exercise.independentWords.length
+  const lastGuidedWord = exercise.guidedChain.words[exercise.guidedChain.words.length - 1]
+
+  const [phase, setPhase] = useState<'intro' | 'guided' | 'independent' | 'recall' | 'results'>('intro')
+  const [guidedStep, setGuidedStep] = useState(0)
+  const [independentStep, setIndependentStep] = useState(0)
+  const [userAssociations, setUserAssociations] = useState<string[]>(() => Array(independentPairCount).fill(''))
+  const [recallStep, setRecallStep] = useState(0)
+  const [recallAnswers, setRecallAnswers] = useState<string[]>(() => Array(allWords.length - 1).fill(''))
+  const [currentRecall, setCurrentRecall] = useState('')
+  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null)
+
+  useEffect(() => { if (inputRef.current) inputRef.current.focus() }, [phase, guidedStep, independentStep, recallStep])
+
+  // Guided pair words
+  const guidedWord1 = exercise.guidedChain.words[guidedStep]
+  const guidedWord2 = exercise.guidedChain.words[guidedStep + 1]
+
+  // Independent pair words
+  const indepWord1 = independentStep === 0 ? lastGuidedWord : exercise.independentWords[independentStep - 1]
+  const indepWord2 = exercise.independentWords[independentStep]
+
+  const advanceGuided = () => {
+    if (guidedStep < guidedPairCount - 1) setGuidedStep(s => s + 1)
+    else setPhase('independent')
+  }
+
+  const advanceIndependent = () => {
+    if (independentStep < independentPairCount - 1) setIndependentStep(s => s + 1)
+    else setPhase('recall')
+  }
+
+  const submitRecall = () => {
+    const next = [...recallAnswers]
+    next[recallStep] = currentRecall.trim()
+    setRecallAnswers(next)
+    setCurrentRecall('')
+    if (recallStep < allWords.length - 2) setRecallStep(s => s + 1)
+    else { setRecallAnswers(next); setPhase('results') }
+  }
+
+  const score = useMemo(() => {
+    if (phase !== 'results') return 0
+    return recallAnswers.filter((a, i) =>
+      a.toLowerCase() === allWords[i + 1].toLowerCase()
+    ).length
+  }, [phase, recallAnswers, allWords])
+
+  if (phase === 'intro') {
+    return (
+      <div className="mm-card">
+        <div className="mm-guidance">{exercise.instructions}</div>
+        <div className="mm-chain-stats">
+          <span>{allWords.length} words to memorize</span>
+          <span>{guidedPairCount} guided links</span>
+          <span>{independentPairCount} you create</span>
+        </div>
+        <button className="btn btn-primary mm-complete" onClick={() => setPhase('guided')}>Begin Linking</button>
+      </div>
+    )
+  }
+
+  if (phase === 'guided') {
+    return (
+      <div className="mm-card">
+        <div className="mm-chain-step">Guided Link {guidedStep + 1} of {guidedPairCount}</div>
+        <div className="mm-chain-pair">
+          <span className="mm-chain-word">{guidedWord1}</span>
+          <span className="mm-chain-arrow">&rarr;</span>
+          <span className="mm-chain-word">{guidedWord2}</span>
+        </div>
+        <div className="mm-chain-association">{exercise.guidedChain.associations[guidedStep]}</div>
+        <div className="mm-chain-hint">Close your eyes and visualize this scene vividly before continuing.</div>
+        <button className="btn btn-primary mm-complete" onClick={advanceGuided}>
+          I've Visualized It
+        </button>
+      </div>
+    )
+  }
+
+  if (phase === 'independent') {
+    const currentAssoc = userAssociations[independentStep]
+    const canAdvance = currentAssoc.trim().length >= 10
+    return (
+      <div className="mm-card">
+        <div className="mm-chain-step">Your Link {independentStep + 1} of {independentPairCount}</div>
+        {independentStep === 0 && (
+          <div className="mm-chain-intro">Now it's your turn! Create your own far-fetched, vivid associations.</div>
+        )}
+        <div className="mm-chain-pair">
+          <span className="mm-chain-word">{indepWord1}</span>
+          <span className="mm-chain-arrow">&rarr;</span>
+          <span className="mm-chain-word">{indepWord2}</span>
+        </div>
+        <textarea
+          ref={el => { inputRef.current = el }}
+          className="mm-textarea"
+          rows={3}
+          placeholder="Describe a vivid, absurd scene linking these two words..."
+          value={currentAssoc}
+          onChange={e => { const next = [...userAssociations]; next[independentStep] = e.target.value; setUserAssociations(next) }}
+        />
+        {canAdvance && (
+          <button className="btn btn-primary mm-complete" onClick={advanceIndependent}>
+            {independentStep < independentPairCount - 1 ? 'Next Pair' : 'Start Recall'}
+          </button>
+        )}
+      </div>
+    )
+  }
+
+  if (phase === 'recall') {
+    const expectedWord = allWords[recallStep + 1]
+    return (
+      <div className="mm-card">
+        <div className="mm-chain-step">Recall {recallStep + 1} of {allWords.length - 1}</div>
+        <div className="mm-chain-recall-hint">
+          {recallStep === 0
+            ? <>The first word was <strong>{allWords[0]}</strong>. What comes next?</>
+            : <>You said <strong>{recallAnswers[recallStep - 1]}</strong>. What's next?</>}
+        </div>
+        <input
+          ref={el => { inputRef.current = el }}
+          className="mm-recall-input"
+          value={currentRecall}
+          placeholder={`Word ${recallStep + 2}...`}
+          onChange={e => setCurrentRecall(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter' && currentRecall.trim()) submitRecall() }}
+        />
+        {currentRecall.trim() && (
+          <button className="btn btn-primary mm-complete" onClick={submitRecall}>
+            {recallStep < allWords.length - 2 ? 'Next' : 'See Results'}
+          </button>
+        )}
+      </div>
+    )
+  }
+
+  // Results phase
+  return (
+    <div className="mm-card">
+      <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--color-primary)', textAlign: 'center', marginBottom: 12 }}>
+        {score}/{allWords.length - 1} correct
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div style={{ padding: '4px 8px', borderRadius: 'var(--radius)', background: 'var(--color-success-bg)', display: 'flex', alignItems: 'baseline', gap: 8 }}>
+          <span style={{ fontWeight: 600, width: 24, fontSize: '0.8rem' }}>1.</span>
+          <strong style={{ fontSize: '0.85rem' }}>{allWords[0]}</strong>
+          <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>(given)</span>
+        </div>
+        {recallAnswers.map((answer, i) => {
+          const expected = allWords[i + 1]
+          const correct = answer.toLowerCase() === expected.toLowerCase()
+          return (
+            <div key={i} style={{ display: 'flex', alignItems: 'baseline', gap: 8, padding: '4px 8px', borderRadius: 'var(--radius)',
+              background: correct ? 'var(--color-success-bg)' : 'var(--color-danger-bg)' }}>
+              <span style={{ fontWeight: 600, width: 24, fontSize: '0.8rem' }}>{i + 2}.</span>
+              <span style={{ flex: 1, fontSize: '0.85rem' }}>
+                <strong>{expected}</strong>
+                {!correct && <span style={{ color: 'var(--color-danger)', marginLeft: 8 }}>— you wrote: "{answer || '(blank)'}"</span>}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+      <button className="btn btn-primary mm-complete" onClick={() => {
+        onComplete(
+          `Score: ${score}/${allWords.length - 1}\n` +
+          `Guided: ${guidedPairCount} pairs | Independent: ${independentPairCount} pairs\n` +
+          allWords.map((w, i) => {
+            if (i === 0) return `1. ${w} (given)`
+            const a = recallAnswers[i - 1]
+            const ok = a.toLowerCase() === w.toLowerCase()
+            return `${i + 1}. ${ok ? '✓' : '✗'} Expected: "${w}" | Your answer: "${a}"`
+          }).join('\n') +
+          '\n\nYour associations:\n' +
+          userAssociations.map((a, i) => {
+            const w1 = i === 0 ? lastGuidedWord : exercise.independentWords[i - 1]
+            return `${w1} → ${exercise.independentWords[i]}: ${a}`
+          }).join('\n')
+        )
+      }}>Complete Exercise</button>
+    </div>
+  )
+}
+
 // === Main Export ===
 export function MMExerciseCard({ exercise, onComplete }: { exercise: MMExercise; onComplete: (response: string) => void }) {
   switch (exercise.type) {
@@ -395,5 +586,6 @@ export function MMExerciseCard({ exercise, onComplete }: { exercise: MMExercise;
     case 'speedLog': return <SpeedLogCard exercise={exercise} onComplete={onComplete} />
     case 'timedRecall': return <TimedRecallCard exercise={exercise} onComplete={onComplete} />
     case 'sequenceInput': return <SequenceInputCard exercise={exercise} onComplete={onComplete} />
+    case 'chainLinking': return <ChainLinkingCard exercise={exercise} onComplete={onComplete} />
   }
 }
