@@ -503,7 +503,6 @@ function ChainLinkingCard({ exercise, onComplete }: CardProps<ChainLinkingExerci
   }
 
   if (phase === 'recall') {
-    const expectedWord = allWords[recallStep + 1]
     return (
       <div className="mm-card">
         <div className="mm-chain-step">Recall {recallStep + 1} of {allWords.length - 1}</div>
