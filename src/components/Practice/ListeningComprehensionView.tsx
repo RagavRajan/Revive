@@ -11,7 +11,7 @@ interface Props {
 export function ListeningComprehensionView({ onBack }: Props) {
   const {
     loading, videos, proxyAvailable, proxyUrl,
-    complete, redo, isCompleted, getResponse, addVideo,
+    complete, isCompleted, getResponse, addVideo,
     completedCount, totalQuestions,
   } = useListeningComprehension()
 
