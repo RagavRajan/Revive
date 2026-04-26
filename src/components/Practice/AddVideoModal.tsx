@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { LCVideo } from '../../types/practice'
 
-type Status = 'idle' | 'extracting' | 'generating' | 'manual' | 'error'
+type Status = 'idle' | 'extracting' | 'generating' | 'manual' | 'import' | 'error'
 
 interface Props {
   proxyUrl: string
@@ -16,6 +16,8 @@ export function AddVideoModal({ proxyUrl, onAdd, onClose }: Props) {
   // Manual fallback
   const [manualTranscript, setManualTranscript] = useState('')
   const [manualTitle, setManualTitle] = useState('')
+  // Import JSON
+  const [importJson, setImportJson] = useState('')
 
   const generate = async () => {
     if (!url.trim()) return
@@ -82,6 +84,20 @@ export function AddVideoModal({ proxyUrl, onAdd, onClose }: Props) {
     }
   }
 
+  const importVideo = () => {
+    try {
+      const parsed = JSON.parse(importJson)
+      const video: LCVideo = { ...parsed, id: crypto.randomUUID() }
+      if (!video.exercises || !video.transcript) {
+        setError('Invalid video JSON — must have exercises and transcript fields')
+        return
+      }
+      onAdd(video)
+    } catch {
+      setError('Invalid JSON')
+    }
+  }
+
   const isLoading = status === 'extracting' || status === 'generating'
 
   return (
@@ -93,14 +109,18 @@ export function AddVideoModal({ proxyUrl, onAdd, onClose }: Props) {
         </div>
 
         <div className="lc-modal-body">
-          <label className="lc-modal-label">Video URL</label>
-          <input
-            className="lc-modal-input"
-            value={url}
-            onChange={e => setUrl(e.target.value)}
-            placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
-            disabled={isLoading}
-          />
+          {status !== 'import' && (
+            <>
+              <label className="lc-modal-label">Video URL</label>
+              <input
+                className="lc-modal-input"
+                value={url}
+                onChange={e => setUrl(e.target.value)}
+                placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
+                disabled={isLoading}
+              />
+            </>
+          )}
 
           {status === 'manual' && (
             <>
@@ -126,6 +146,30 @@ export function AddVideoModal({ proxyUrl, onAdd, onClose }: Props) {
                 disabled={!manualTranscript.trim()}
               >
                 Generate Questions
+              </button>
+            </>
+          )}
+
+          {status === 'import' && (
+            <>
+              <label className="lc-modal-label">Paste video JSON</label>
+              <textarea
+                className="lc-modal-textarea"
+                value={importJson}
+                onChange={e => { setImportJson(e.target.value); setError('') }}
+                placeholder='Paste the full video JSON object here...'
+                rows={10}
+              />
+              {error && <div className="lc-modal-error">{error}</div>}
+              <button
+                className="btn btn-primary lc-modal-btn"
+                onClick={importVideo}
+                disabled={!importJson.trim()}
+              >
+                Import
+              </button>
+              <button className="btn btn-outline lc-modal-btn" onClick={() => { setStatus('idle'); setError('') }}>
+                Back
               </button>
             </>
           )}
@@ -157,13 +201,21 @@ export function AddVideoModal({ proxyUrl, onAdd, onClose }: Props) {
           )}
 
           {status === 'idle' && (
-            <button
-              className="btn btn-primary lc-modal-btn"
-              onClick={generate}
-              disabled={!url.trim()}
-            >
-              Generate
-            </button>
+            <>
+              <button
+                className="btn btn-primary lc-modal-btn"
+                onClick={generate}
+                disabled={!url.trim()}
+              >
+                Generate
+              </button>
+              <button
+                className="btn btn-outline lc-modal-btn"
+                onClick={() => setStatus('import')}
+              >
+                Import JSON
+              </button>
+            </>
           )}
         </div>
       </div>

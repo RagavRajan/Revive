@@ -194,6 +194,15 @@ app.post('/generate-from-transcript', async (req, res) => {
   }
 })
 
+app.post('/import', (req, res) => {
+  const video = req.body
+  if (!video || !video.exercises) {
+    res.status(400).json({ error: 'Invalid video object' })
+    return
+  }
+  res.json({ video })
+})
+
 app.listen(PORT, () => {
   console.log(`Proxy server running on http://localhost:${PORT}`)
 })
