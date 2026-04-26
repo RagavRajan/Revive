@@ -11,7 +11,7 @@ interface Props {
 export function ListeningComprehensionView({ onBack }: Props) {
   const {
     loading, videos, proxyAvailable, proxyUrl,
-    complete, isCompleted, getResponse, addVideo,
+    complete, redo, isCompleted, getResponse, addVideo,
     completedCount, totalQuestions,
   } = useListeningComprehension()
 
@@ -55,12 +55,12 @@ export function ListeningComprehensionView({ onBack }: Props) {
         <div className="lc-detail-body">
           {/* Watch tab */}
           <div style={{ display: activeTab === 'watch' ? 'block' : 'none' }}>
+            <h3 className="lc-reading-title">Transcript</h3>
             {selectedVideo.url && (
               <a href={selectedVideo.url} target="_blank" rel="noopener noreferrer" className="lc-video-link">
-                Open video &rarr;
+                &#127911; Watch video &rarr;
               </a>
             )}
-            <h3 className="lc-reading-title">Transcript</h3>
             <div className="lc-transcript">
               {selectedVideo.transcript.split('\n\n').map((p, i) => <p key={i} className="lc-reading-p">{p}</p>)}
             </div>
@@ -91,6 +91,7 @@ export function ListeningComprehensionView({ onBack }: Props) {
               isCompleted={isCompleted}
               getResponse={getResponse}
               onComplete={complete}
+              onRedo={(keys) => keys.forEach(k => redo(k))}
             />
           </div>
         </div>

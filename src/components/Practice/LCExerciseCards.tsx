@@ -15,10 +15,27 @@ function shuffle<T>(arr: T[]): T[] {
 function MultipleChoiceCard({ questions, completedKeys, onComplete }: {
   questions: LCMultipleChoiceQuestion[]
   completedKeys: Record<number, string | null>
-  onComplete: (index: number, response: string) => void
+  onComplete: (responses: Record<number, string>) => void
 }) {
+  const unanswered = questions.map((_, i) => i).filter(i => completedKeys[i] === undefined || completedKeys[i] === null)
   const [answers, setAnswers] = useState<(number | null)[]>(questions.map(() => null))
-  const [checked, setChecked] = useState<boolean[]>(questions.map(() => false))
+  const [checked, setChecked] = useState(false)
+
+  const results = answers.map((a, i) => a === questions[i].correctIndex)
+  const allAnswered = unanswered.every(i => answers[i] !== null)
+  const allCorrect = unanswered.every(i => results[i])
+  const score = unanswered.filter(i => results[i]).length
+
+  const check = () => {
+    setChecked(true)
+    if (allCorrect) {
+      const responses: Record<number, string> = {}
+      unanswered.forEach(i => {
+        responses[i] = `${questions[i].question} → ${questions[i].options[answers[i]!]}`
+      })
+      onComplete(responses)
+    }
+  }
 
   return (
     <div className="lc-card">
@@ -34,15 +51,12 @@ function MultipleChoiceCard({ questions, completedKeys, onComplete }: {
             )
           }
 
-          const isChecked = checked[qi]
-          const isCorrect = answers[qi] === q.correctIndex
-
           return (
-            <div key={qi} className={`lc-mc-question ${isChecked ? (isCorrect ? 'lc-mc-correct' : 'lc-mc-wrong') : ''}`}>
+            <div key={qi} className={`lc-mc-question ${checked ? (results[qi] ? 'lc-mc-correct' : 'lc-mc-wrong') : ''}`}>
               <div className="lc-mc-q">{qi + 1}. {q.question}</div>
               <div className="lc-mc-options">
                 {q.options.map((opt, oi) => (
-                  <label key={oi} className={`lc-mc-option ${answers[qi] === oi ? 'lc-mc-chosen' : ''} ${isChecked && oi === q.correctIndex ? 'lc-mc-answer' : ''}`}>
+                  <label key={oi} className={`lc-mc-option ${answers[qi] === oi ? 'lc-mc-chosen' : ''} ${checked && oi === q.correctIndex ? 'lc-mc-answer' : ''}`}>
                     <input
                       type="radio"
                       name={`lc-q${qi}`}
@@ -51,32 +65,23 @@ function MultipleChoiceCard({ questions, completedKeys, onComplete }: {
                         const next = [...answers]
                         next[qi] = oi
                         setAnswers(next)
-                        const c = [...checked]
-                        c[qi] = false
-                        setChecked(c)
+                        setChecked(false)
                       }}
                     />
                     {opt}
                   </label>
                 ))}
               </div>
-              {answers[qi] !== null && (
-                <button className="btn btn-primary lc-check-btn" onClick={() => {
-                  const c = [...checked]
-                  c[qi] = true
-                  setChecked(c)
-                  if (answers[qi] === q.correctIndex) {
-                    onComplete(qi, `${q.question} → ${q.options[answers[qi]!]}`)
-                  }
-                }}>
-                  {isChecked && isCorrect ? 'Completed' : 'Check'}
-                </button>
-              )}
-              {isChecked && !isCorrect && <div className="lc-error">Incorrect — the correct answer is highlighted</div>}
             </div>
           )
         })}
       </div>
+      {checked && !allCorrect && <div className="lc-error">{score}/{unanswered.length} correct — the correct answers are highlighted</div>}
+      {allAnswered && unanswered.length > 0 && (
+        <button className="btn btn-primary lc-complete" onClick={check}>
+          {checked && allCorrect ? 'Complete' : 'Check Answers'}
+        </button>
+      )}
     </div>
   )
 }
@@ -87,10 +92,27 @@ function VocabFillCard({ sentences, wordBank, completedKeys, onComplete }: {
   sentences: LCVocabFillSentence[]
   wordBank: string[]
   completedKeys: Record<number, string | null>
-  onComplete: (index: number, response: string) => void
+  onComplete: (responses: Record<number, string>) => void
 }) {
+  const unanswered = sentences.map((_, i) => i).filter(i => completedKeys[i] === undefined || completedKeys[i] === null)
   const [answers, setAnswers] = useState<string[]>(sentences.map(() => ''))
-  const [checked, setChecked] = useState<boolean[]>(sentences.map(() => false))
+  const [checked, setChecked] = useState(false)
+
+  const results = answers.map((a, i) => a.trim().toLowerCase() === sentences[i].answer.toLowerCase())
+  const allFilled = unanswered.every(i => answers[i].trim().length > 0)
+  const allCorrect = unanswered.every(i => results[i])
+  const score = unanswered.filter(i => results[i]).length
+
+  const check = () => {
+    setChecked(true)
+    if (allCorrect) {
+      const responses: Record<number, string> = {}
+      unanswered.forEach(i => {
+        responses[i] = sentences[i].text.replace('___', answers[i].trim())
+      })
+      onComplete(responses)
+    }
+  }
 
   return (
     <div className="lc-card">
@@ -113,12 +135,10 @@ function VocabFillCard({ sentences, wordBank, completedKeys, onComplete }: {
             )
           }
 
-          const isChecked = checked[i]
-          const isCorrect = answers[i].trim().toLowerCase() === s.answer.toLowerCase()
           const parts = s.text.split('___')
 
           return (
-            <div key={i} className={`lc-fill-item ${isChecked ? (isCorrect ? 'lc-fill-correct' : 'lc-fill-wrong') : ''}`}>
+            <div key={i} className={`lc-fill-item ${checked ? (results[i] ? 'lc-fill-correct' : 'lc-fill-wrong') : ''}`}>
               <span className="lc-fill-num">{i + 1}.</span>
               <span className="lc-fill-text">
                 {parts[0]}
@@ -129,31 +149,23 @@ function VocabFillCard({ sentences, wordBank, completedKeys, onComplete }: {
                     const next = [...answers]
                     next[i] = e.target.value
                     setAnswers(next)
-                    const c = [...checked]
-                    c[i] = false
-                    setChecked(c)
+                    setChecked(false)
                   }}
                   placeholder="..."
                 />
                 {parts[1] || ''}
               </span>
-              {answers[i].trim() && (
-                <button className="btn btn-primary lc-check-btn" style={{ fontSize: '0.75rem', padding: '3px 10px' }} onClick={() => {
-                  const c = [...checked]
-                  c[i] = true
-                  setChecked(c)
-                  if (answers[i].trim().toLowerCase() === s.answer.toLowerCase()) {
-                    onComplete(i, s.text.replace('___', answers[i].trim()))
-                  }
-                }}>
-                  Check
-                </button>
-              )}
-              {isChecked && !isCorrect && <span className="lc-fill-answer">({s.answer})</span>}
+              {checked && !results[i] && <span className="lc-fill-answer">({s.answer})</span>}
             </div>
           )
         })}
       </div>
+      {checked && !allCorrect && <div className="lc-error">{score}/{unanswered.length} correct — fix the highlighted answers</div>}
+      {allFilled && unanswered.length > 0 && (
+        <button className="btn btn-primary lc-complete" onClick={check}>
+          {checked && allCorrect ? 'Complete' : 'Check Answers'}
+        </button>
+      )}
     </div>
   )
 }
@@ -163,29 +175,43 @@ function VocabFillCard({ sentences, wordBank, completedKeys, onComplete }: {
 function MatchPairsCard({ pairs, completedKeys, onComplete }: {
   pairs: LCMatchPair[]
   completedKeys: Record<number, string | null>
-  onComplete: (index: number, response: string) => void
+  onComplete: (responses: Record<number, string>) => void
 }) {
-  const uncompletedIndices = pairs.map((_, i) => i).filter(i => completedKeys[i] === undefined || completedKeys[i] === null)
-  const uncompletedPairs = uncompletedIndices.map(i => pairs[i])
-  const shuffledRight = useMemo(() => shuffle(uncompletedPairs.map(p => p.right)), [uncompletedPairs.length])
-  const [matched, setMatched] = useState<Record<number, number>>({})
+  const shuffledRight = useMemo(() => shuffle(pairs.map(p => p.right)), [pairs])
+  const [matched, setMatched] = useState<Record<number, number>>(() => {
+    // Pre-populate matched state for already-completed pairs
+    const initial: Record<number, number> = {}
+    pairs.forEach((_, i) => {
+      if (completedKeys[i] !== undefined && completedKeys[i] !== null) {
+        const rightIdx = shuffledRight.indexOf(pairs[i].right)
+        if (rightIdx !== -1) initial[i] = rightIdx
+      }
+    })
+    return initial
+  })
   const [selectedLeft, setSelectedLeft] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const completedCount = Object.keys(completedKeys).filter(k => completedKeys[Number(k)] !== null).length
-
   const tryMatch = (rightIdx: number) => {
     if (selectedLeft === null) return
-    const leftPair = uncompletedPairs[selectedLeft]
+    const leftPair = pairs[selectedLeft]
     const rightItem = shuffledRight[rightIdx]
     if (leftPair.right === rightItem) {
       const next = { ...matched, [selectedLeft]: rightIdx }
       setMatched(next)
       setSelectedLeft(null)
       setError(null)
-      // Complete this individual pair
-      const originalIdx = uncompletedIndices[selectedLeft]
-      onComplete(originalIdx, `${leftPair.left} → ${leftPair.right}`)
+      // Check if all pairs are now matched
+      const totalMatched = Object.keys(next).length
+      if (totalMatched === pairs.length) {
+        const responses: Record<number, string> = {}
+        pairs.forEach((p, i) => {
+          if (completedKeys[i] === undefined || completedKeys[i] === null) {
+            responses[i] = `${p.left} → ${p.right}`
+          }
+        })
+        onComplete(responses)
+      }
     } else {
       setError('Not a match — try again')
       setSelectedLeft(null)
@@ -196,46 +222,41 @@ function MatchPairsCard({ pairs, completedKeys, onComplete }: {
 
   return (
     <div className="lc-card">
-      <div className="lc-match-progress">{completedCount + Object.keys(matched).length}/{pairs.length} matched</div>
+      <div className="lc-match-progress">{Object.keys(matched).length}/{pairs.length} matched</div>
       {error && <div className="lc-error">{error}</div>}
-      {uncompletedPairs.length > 0 && (
-        <div className="lc-match-grid">
-          <div className="lc-match-col">
-            {uncompletedPairs.map((p, i) => (
-              <button
-                key={i}
-                className={`lc-match-item ${matched[i] !== undefined ? 'lc-match-done' : ''} ${selectedLeft === i ? 'lc-match-selected' : ''}`}
-                onClick={() => matched[i] === undefined && setSelectedLeft(i)}
-                disabled={matched[i] !== undefined}
-              >
-                {p.left}
-              </button>
-            ))}
-          </div>
-          <div className="lc-match-col">
-            {shuffledRight.map((r, i) => (
-              <button
-                key={i}
-                className={`lc-match-item ${matchedRightIdxs.has(i) ? 'lc-match-done' : ''} ${selectedLeft !== null && !matchedRightIdxs.has(i) ? 'lc-match-target' : ''}`}
-                onClick={() => !matchedRightIdxs.has(i) && tryMatch(i)}
-                disabled={matchedRightIdxs.has(i)}
-              >
-                {r}
-              </button>
-            ))}
-          </div>
+      <div className="lc-match-grid">
+        <div className="lc-match-col">
+          {pairs.map((p, i) => (
+            <button
+              key={i}
+              className={`lc-match-item ${matched[i] !== undefined ? 'lc-match-done' : ''} ${selectedLeft === i ? 'lc-match-selected' : ''}`}
+              onClick={() => matched[i] === undefined && setSelectedLeft(i)}
+              disabled={matched[i] !== undefined}
+            >
+              {p.left}
+            </button>
+          ))}
         </div>
-      )}
-      {completedCount === pairs.length && (
-        <div className="lc-completed-inline" style={{ textAlign: 'center', marginTop: 8 }}>All pairs matched!</div>
-      )}
+        <div className="lc-match-col">
+          {shuffledRight.map((r, i) => (
+            <button
+              key={i}
+              className={`lc-match-item ${matchedRightIdxs.has(i) ? 'lc-match-done' : ''} ${selectedLeft !== null && !matchedRightIdxs.has(i) ? 'lc-match-target' : ''}`}
+              onClick={() => !matchedRightIdxs.has(i) && tryMatch(i)}
+              disabled={matchedRightIdxs.has(i)}
+            >
+              {r}
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }
 
 // --- Main export ---
 
-export function LCExercisePanel({ videoId, difficulty, exercises, isCompleted, getResponse, onComplete }: {
+export function LCExercisePanel({ videoId, difficulty, exercises, isCompleted, getResponse, onComplete, onRedo }: {
   videoId: string
   difficulty: 'easy' | 'medium' | 'hard'
   exercises: {
@@ -246,8 +267,36 @@ export function LCExercisePanel({ videoId, difficulty, exercises, isCompleted, g
   isCompleted: (key: string) => boolean
   getResponse: (key: string) => string | null
   onComplete: (key: string, response: string) => void
+  onRedo: (keys: string[]) => void
 }) {
   const makeKey = (index: number) => `${videoId}:${difficulty}:${index}`
+
+  const batchComplete = (responses: Record<number, string>) => {
+    Object.entries(responses).forEach(([idx, resp]) => {
+      onComplete(makeKey(Number(idx)), resp)
+    })
+  }
+
+  const items = difficulty === 'easy' ? exercises.easy
+    : difficulty === 'medium' ? exercises.medium.sentences
+    : exercises.hard
+  const allKeys = items.map((_, i) => makeKey(i))
+  const allDone = allKeys.every(k => isCompleted(k))
+
+  const handleRedo = () => {
+    onRedo(allKeys)
+  }
+
+  if (allDone) {
+    return (
+      <div className="lc-card">
+        <div className="lc-completed-section">
+          <div className="lc-completed-badge">Completed</div>
+          <button className="btn btn-outline" onClick={handleRedo}>Redo Exercise</button>
+        </div>
+      </div>
+    )
+  }
 
   if (difficulty === 'easy') {
     const completedKeys: Record<number, string | null> = {}
@@ -258,7 +307,7 @@ export function LCExercisePanel({ videoId, difficulty, exercises, isCompleted, g
     return <MultipleChoiceCard
       questions={exercises.easy}
       completedKeys={completedKeys}
-      onComplete={(idx, resp) => onComplete(makeKey(idx), resp)}
+      onComplete={batchComplete}
     />
   }
 
@@ -272,7 +321,7 @@ export function LCExercisePanel({ videoId, difficulty, exercises, isCompleted, g
       sentences={exercises.medium.sentences}
       wordBank={exercises.medium.wordBank}
       completedKeys={completedKeys}
-      onComplete={(idx, resp) => onComplete(makeKey(idx), resp)}
+      onComplete={batchComplete}
     />
   }
 
@@ -285,6 +334,6 @@ export function LCExercisePanel({ videoId, difficulty, exercises, isCompleted, g
   return <MatchPairsCard
     pairs={exercises.hard}
     completedKeys={completedKeys}
-    onComplete={(idx, resp) => onComplete(makeKey(idx), resp)}
+    onComplete={batchComplete}
   />
 }
