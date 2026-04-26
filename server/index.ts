@@ -27,6 +27,7 @@ function extractVideoId(url: string): { platform: 'youtube' | 'vimeo'; id: strin
   return null
 }
 
+
 function estimateDuration(transcript: string): number {
   const words = transcript.split(/\s+/).length
   return Math.round(words / 150) // ~150 words per minute spoken
@@ -69,10 +70,14 @@ Format: { "pairs": [{ "left": "concept/cause", "right": "definition/effect" }] }
 - Right side: matching definition, evidence, effect, or counterpoint
 - Pairs should require genuine comprehension, not just keyword matching
 
+### Article
+Rewrite the transcript as a well-structured, readable article. Use markdown-style headings (## for sections) to break it into logical topics. Clean up filler words, false starts, and spoken artifacts. Preserve all key information and terminology. Keep it concise but complete.
+
 ## Output
 Return ONLY a JSON object with this exact schema, no markdown fences:
 {
   "title": "descriptive title for the video",
+  "article": "## Section Heading\\n\\nParagraph text...\\n\\n## Next Section\\n\\nMore text...",
   "easy": [{ "question": "...", "options": ["...", "...", "...", "..."], "correctIndex": 0 }],
   "medium": { "sentences": [{ "text": "...", "answer": "..." }], "wordBank": ["..."] },
   "hard": [{ "left": "...", "right": "..." }]
@@ -96,6 +101,7 @@ async function generateQuestions(transcript: string, title: string, durationMinu
 
   return {
     title: parsed.title || title,
+    article: parsed.article || '',
     exercises: {
       easy: parsed.easy,
       medium: {
@@ -150,7 +156,7 @@ app.post('/generate', async (req, res) => {
         url,
         title: result.title,
         durationMinutes,
-        transcript,
+        transcript: result.article || transcript,
         exercises: result.exercises,
         createdAt: Date.now(),
       },
@@ -177,7 +183,7 @@ app.post('/generate-from-transcript', async (req, res) => {
         url: url || '',
         title: result.title,
         durationMinutes,
-        transcript,
+        transcript: result.article || transcript,
         exercises: result.exercises,
         createdAt: Date.now(),
       },

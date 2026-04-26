@@ -61,9 +61,14 @@ export function ListeningComprehensionView({ onBack }: Props) {
                 <span>{selectedVideo.url}</span>
               </a>
             )}
-            <h3 className="lc-reading-title">Transcript</h3>
             <div className="lc-transcript">
-              {selectedVideo.transcript.split('\n\n').map((p, i) => <p key={i} className="lc-reading-p">{p}</p>)}
+              {selectedVideo.transcript.split('\n\n').map((block, i) => {
+                const headingMatch = block.match(/^##\s+(.+)$/)
+                if (headingMatch) {
+                  return <h3 key={i} className="lc-section-heading">{headingMatch[1]}</h3>
+                }
+                return <p key={i} className="lc-reading-p">{block}</p>
+              })}
             </div>
           </div>
 
@@ -464,12 +469,6 @@ const detailStyles = `
     font-size: 1.1rem;
     flex-shrink: 0;
   }
-  .lc-reading-title {
-    font-size: 1.05rem;
-    font-weight: 700;
-    color: var(--color-text);
-    margin-bottom: 12px;
-  }
   .lc-reading-p {
     font-size: 0.9rem;
     color: var(--color-text);
@@ -479,6 +478,18 @@ const detailStyles = `
   }
   .lc-transcript {
     max-height: none;
+  }
+  .lc-section-heading {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--color-text);
+    margin-top: 20px;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .lc-section-heading:first-child {
+    margin-top: 0;
   }
 
   /* Difficulty sub-tabs */
