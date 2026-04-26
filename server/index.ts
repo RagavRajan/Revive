@@ -88,7 +88,7 @@ async function generateQuestions(transcript: string, title: string, durationMinu
   const counts = getQuestionCounts(durationMinutes)
 
   const response = await anthropic.messages.create({
-    model: 'claude-opus-4-7',
+    model: 'claude-sonnet-4-6',
     max_tokens: 16384,
     system: 'You are a listening comprehension test designer. Given a video transcript, generate comprehension questions at three difficulty levels. Return ONLY valid JSON, no markdown code fences, no extra text.',
     messages: [{ role: 'user', content: buildPrompt(transcript, title, counts) }],
