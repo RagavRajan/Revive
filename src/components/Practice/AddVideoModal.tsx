@@ -131,7 +131,22 @@ export function AddVideoModal({ proxyUrl, onAdd, onClose }: Props) {
           )}
 
           {status === 'error' && (
-            <div className="lc-modal-error">{error}</div>
+            <>
+              <div className="lc-modal-error">{error}</div>
+              <button
+                className="btn btn-primary lc-modal-btn"
+                onClick={generate}
+                disabled={!url.trim()}
+              >
+                Retry
+              </button>
+              <button
+                className="btn btn-outline lc-modal-btn"
+                onClick={() => setStatus('manual')}
+              >
+                Enter transcript manually
+              </button>
+            </>
           )}
 
           {isLoading && (
@@ -141,7 +156,7 @@ export function AddVideoModal({ proxyUrl, onAdd, onClose }: Props) {
             </div>
           )}
 
-          {(status === 'idle' || status === 'error') && (
+          {status === 'idle' && (
             <button
               className="btn btn-primary lc-modal-btn"
               onClick={generate}
