@@ -55,12 +55,13 @@ export function ListeningComprehensionView({ onBack }: Props) {
         <div className="lc-detail-body">
           {/* Watch tab */}
           <div style={{ display: activeTab === 'watch' ? 'block' : 'none' }}>
-            <h3 className="lc-reading-title">Transcript</h3>
             {selectedVideo.url && (
-              <a href={selectedVideo.url} target="_blank" rel="noopener noreferrer" className="lc-video-link">
-                &#127911; Watch video &rarr;
+              <a href={selectedVideo.url} target="_blank" rel="noopener noreferrer" className="lc-video-banner">
+                <span className="lc-video-banner-icon">&#9654;</span>
+                <span>{selectedVideo.url}</span>
               </a>
             )}
+            <h3 className="lc-reading-title">Transcript</h3>
             <div className="lc-transcript">
               {selectedVideo.transcript.split('\n\n').map((p, i) => <p key={i} className="lc-reading-p">{p}</p>)}
             </div>
@@ -440,20 +441,28 @@ const detailStyles = `
     margin: 0 auto;
     width: 100%;
   }
-  .lc-video-link {
-    display: inline-block;
-    font-size: 0.85rem;
-    color: var(--color-primary);
-    font-weight: 600;
-    padding: 8px 14px;
-    border: 1px solid var(--color-primary);
+  .lc-video-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
     border-radius: var(--radius);
     margin-bottom: 16px;
     text-decoration: none;
-    transition: background var(--transition);
+    color: var(--color-primary);
+    font-size: 0.82rem;
+    font-weight: 500;
+    word-break: break-all;
+    transition: border-color var(--transition);
   }
-  .lc-video-link:hover {
-    background: rgba(108, 99, 255, 0.1);
+  .lc-video-banner:hover {
+    border-color: var(--color-primary);
+  }
+  .lc-video-banner-icon {
+    font-size: 1.1rem;
+    flex-shrink: 0;
   }
   .lc-reading-title {
     font-size: 1.05rem;
