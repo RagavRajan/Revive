@@ -51,6 +51,13 @@ export function Layout({ activeView, onNavigate, onSignOut, onStats, userEmail, 
           <span className="nav-label">Skills</span>
         </button>
         <button
+          className={`nav-tab ${activeView === 'practice' ? 'nav-active' : ''}`}
+          onClick={() => onNavigate('practice')}
+        >
+          <span className="nav-icon">&#127911;</span>
+          <span className="nav-label">Practice</span>
+        </button>
+        <button
           className={`nav-tab ${activeView === 'settings' ? 'nav-active' : ''} ${!checkedIn ? 'nav-disabled' : ''}`}
           onClick={() => checkedIn ? onNavigate('settings') : undefined}
         >

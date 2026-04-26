@@ -16,6 +16,7 @@ import { ScannerView } from './components/Scanner/ScannerView'
 import { BarcodeRegistration } from './components/Scanner/BarcodeRegistration'
 import { SettingsPage } from './components/Settings/SettingsPage'
 import { SkillsView } from './components/Skills/SkillsView'
+import { PracticeView } from './components/Practice/PracticeView'
 import { ReminderBanner } from './components/ReminderBanner'
 
 function getSharedUid(): string | null {
@@ -78,6 +79,9 @@ function AuthenticatedApp({ user }: { user: User }) {
       )}
       {activeView === 'skills' && (
         <SkillsView />
+      )}
+      {activeView === 'practice' && (
+        <PracticeView />
       )}
       {activeView === 'settings' && checkedIn && (
         <SettingsPage
