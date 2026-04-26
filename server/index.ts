@@ -71,7 +71,7 @@ Format: { "pairs": [{ "left": "concept/cause", "right": "definition/effect" }] }
 - Pairs should require genuine comprehension, not just keyword matching
 
 ### Article
-Rewrite the transcript as a well-structured, readable article. Use markdown-style headings (## for sections) to break it into logical topics. Clean up filler words, false starts, and spoken artifacts. Preserve all key information and terminology. Keep it concise but complete.
+Take the exact transcript text and break it into logical sections. Insert markdown headings (## Section Title) at natural topic boundaries. Do NOT rewrite, summarize, or change any words — keep every word of the original transcript exactly as-is. Only add section headings and paragraph breaks to make it readable.
 
 ## Output
 Return ONLY a JSON object with this exact schema, no markdown fences:
