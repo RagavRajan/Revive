@@ -11,7 +11,7 @@ interface Props {
 export function ListeningComprehensionView({ onBack }: Props) {
   const {
     loading, videos, proxyAvailable, proxyUrl,
-    complete, redo, isCompleted, getResponse, addVideo,
+    complete, redo, isCompleted, getResponse, addVideo, deleteVideo,
     completedCount, totalQuestions,
   } = useListeningComprehension()
 
@@ -140,18 +140,23 @@ export function ListeningComprehensionView({ onBack }: Props) {
             video.exercises.hard.forEach((_, i) => { if (isCompleted(`${video.id}:hard:${i}`)) done++ })
 
             return (
-              <button key={video.id} className="lc-video-card" onClick={() => { setSelectedVideo(video); setActiveTab('exercise') }}>
-                <div className="lc-video-info">
-                  <div className="lc-video-title">{video.title}</div>
-                  <div className="lc-video-meta">{video.durationMinutes} min</div>
-                </div>
-                <div className="lc-video-progress">
-                  <span className={`lc-video-count ${done === total ? 'lc-video-done' : ''}`}>
-                    {done}/{total}
-                  </span>
-                  {done === total && <span className="lc-video-check">&check;</span>}
-                </div>
-              </button>
+              <div key={video.id} className="lc-video-card">
+                <button className="lc-video-card-body" onClick={() => { setSelectedVideo(video); setActiveTab('exercise') }}>
+                  <div className="lc-video-info">
+                    <div className="lc-video-title">{video.title}</div>
+                    <div className="lc-video-meta">{video.durationMinutes} min</div>
+                  </div>
+                  <div className="lc-video-progress">
+                    <span className={`lc-video-count ${done === total ? 'lc-video-done' : ''}`}>
+                      {done}/{total}
+                    </span>
+                    {done === total && <span className="lc-video-check">&check;</span>}
+                  </div>
+                </button>
+                <button className="lc-video-delete" onClick={() => {
+                  if (window.confirm('Delete this video and its exercises?')) deleteVideo(video.id)
+                }}>&times;</button>
+              </div>
             )
           })}
         </div>
@@ -229,18 +234,35 @@ const listStyles = `
   .lc-video-card {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 14px 16px;
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
-    cursor: pointer;
     transition: border-color var(--transition);
-    text-align: left;
-    width: 100%;
   }
   .lc-video-card:hover {
     border-color: var(--color-primary);
+  }
+  .lc-video-card-body {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex: 1;
+    padding: 14px 16px;
+    cursor: pointer;
+    text-align: left;
+    min-width: 0;
+  }
+  .lc-video-delete {
+    padding: 14px 14px;
+    font-size: 1.1rem;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: color var(--transition);
+    flex-shrink: 0;
+    border-left: 1px solid var(--color-border);
+  }
+  .lc-video-delete:hover {
+    color: var(--color-danger);
   }
   .lc-video-info {
     flex: 1;

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { LCProgress, LCVideo } from '../types/practice'
-import { getLCProgress, completeLCExercise, clearLCExercise, getLCVideos, addLCVideo } from '../db/practice'
+import { getLCProgress, completeLCExercise, clearLCExercise, getLCVideos, addLCVideo, deleteLCVideo } from '../db/practice'
 
 const PROXY_URL = import.meta.env.VITE_PROXY_URL || 'http://localhost:3001'
 
@@ -45,6 +45,11 @@ export function useListeningComprehension() {
     setVideos(prev => [video, ...prev])
   }, [])
 
+  const deleteVideo = useCallback(async (videoId: string) => {
+    await deleteLCVideo(videoId)
+    setVideos(prev => prev.filter(v => v.id !== videoId))
+  }, [])
+
   const completedCount = progress ? Object.keys(progress.completions).length : 0
 
   const totalQuestions = videos.reduce((sum, v) => {
@@ -53,7 +58,7 @@ export function useListeningComprehension() {
 
   return {
     progress, videos, loading, proxyAvailable,
-    complete, redo, isCompleted, getResponse, addVideo,
+    complete, redo, isCompleted, getResponse, addVideo, deleteVideo,
     completedCount, totalQuestions, proxyUrl: PROXY_URL,
   }
 }
